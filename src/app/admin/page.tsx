@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getPendingProfessionals, approveProfessional } from "../actions";
+import Link from "next/link";
 
 export default function AdminPage() {
   const [pending, setPending] = useState<any[]>([]);
@@ -32,7 +33,12 @@ export default function AdminPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 p-4 pb-10">
-      <h1 className="text-2xl font-bold text-gray-800 mb-6 border-b pb-4">پەڕەی ئەدمین - وەستا چاوەڕوانکراوەکان</h1>
+      <div className="flex items-center gap-3 mb-6 border-b pb-4">
+        <Link href="/" className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-xl border border-gray-100 flex-shrink-0">
+          🔙
+        </Link>
+        <h1 className="text-xl font-bold text-gray-800">پەڕەی ئەدمین</h1>
+      </div>
 
       {loading ? (
         <div className="text-center text-gray-400 py-10">خەریکی گەڕانە...</div>
