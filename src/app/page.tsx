@@ -5,6 +5,10 @@ import { useEffect, useState } from "react";
 
 export default function Home() {
   const [username, setUsername] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // ئایدی ئەدمین (دەتوانیت زیاتر لە یەک ئایدی دابنێیت لێرە ئەگەر بتەوێت)
+  const ADMIN_ID = 1932967171;
 
   useEffect(() => {
     // ئەگەر لەناو تیلیگرام بکرێتەوە، دەتوانین ناوی بەکارهێنەر وەربگرین
@@ -14,6 +18,11 @@ export default function Home() {
       tg.expand();
       if (tg.initDataUnsafe?.user) {
         setUsername(tg.initDataUnsafe.user.first_name);
+        
+        // پشکنینی ئەوەی کە ئایا ئەو کەسەی بەرنامەکەی کردۆتەوە ئەدمینە یان نا
+        if (tg.initDataUnsafe.user.id === ADMIN_ID) {
+          setIsAdmin(true);
+        }
       }
     }
   }, []);
@@ -53,6 +62,20 @@ export default function Home() {
           </div>
           <span className="text-2xl bg-gray-50 p-2 rounded-xl">💼</span>
         </Link>
+
+        {/* ئەم بەشە تەنها ئەدمین دەیبینێت */}
+        {isAdmin && (
+          <Link 
+            href="/admin"
+            className="w-full mt-4 bg-red-50 border border-red-200 text-red-700 font-medium py-4 px-6 rounded-2xl flex items-center justify-between shadow-sm active:scale-95 transition-transform"
+          >
+            <div className="flex flex-col text-right">
+              <span className="text-lg font-bold">بەشی ئەدمین</span>
+              <span className="text-xs text-red-500">پەسەندکردنی وەستاکان</span>
+            </div>
+            <span className="text-2xl bg-white p-2 rounded-xl border border-red-100">👑</span>
+          </Link>
+        )}
       </div>
 
       <div className="mt-auto pt-8 text-xs text-gray-400">
