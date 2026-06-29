@@ -49,6 +49,7 @@ export async function registerProfessional(formData: {
   const { error } = await supabase.from("professionals").insert([
     {
       ...formData,
+      phone: normalizeText(formData.phone), // گۆڕینی ژمارەکان بۆ ئینگلیزی
       is_approved: false, // ئەدمین دەبێت قبوڵی بکات
     },
   ]);
@@ -90,6 +91,19 @@ export async function getPendingProfessionals() {
   return data || [];
 }
 
+function normalizeText(text: string) {
+  if (!text) return text;
+  const arabicNumbers = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+  const persianNumbers = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+  
+  let result = text;
+  for (let i = 0; i < 10; i++) {
+    result = result.split(arabicNumbers[i]).join(i.toString())
+                   .split(persianNumbers[i]).join(i.toString());
+  }
+  return result;
+}
+
 export async function deleteProfessional(id: string) {
   const { error } = await supabase
     .from("professionals")
@@ -117,7 +131,8 @@ export async function getAdminApprovedProfessionals(searchQuery: string = "") {
     .order("created_at", { ascending: false });
 
   if (searchQuery) {
-    query = query.or(`name.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`);
+    const normalizedSearch = normalizeText(searchQuery);
+    query = query.or(`name.ilike.%${normalizedSearch}%,phone.ilike.%${normalizedSearch}%`);
   }
 
   const { data, error } = await query;
@@ -142,7 +157,8 @@ export async function getPendingProfessionalsSearch(searchQuery: string = "") {
     .order("created_at", { ascending: false });
 
   if (searchQuery) {
-    query = query.or(`name.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`);
+    const normalizedSearch = normalizeText(searchQuery);
+    query = query.or(`name.ilike.%${normalizedSearch}%,phone.ilike.%${normalizedSearch}%`);
   }
 
   const { data, error } = await query;
@@ -154,7 +170,7 @@ export async function sendMessage(formData: { name: string; phone: string; messa
   const { error } = await supabase.from("messages").insert([
     {
       sender_name: formData.name,
-      phone: formData.phone,
+      phone: normalizeText(formData.phone),
       message_text: formData.message,
     },
   ]);
