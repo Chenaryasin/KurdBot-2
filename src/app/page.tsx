@@ -63,6 +63,17 @@ export default function Home() {
           <span className="text-2xl bg-gray-50 p-2 rounded-xl">💼</span>
         </Link>
 
+        <Link 
+          href="/contact"
+          className="w-full bg-white border-2 border-gray-100 text-gray-800 font-medium py-4 px-6 rounded-2xl flex items-center justify-between shadow-sm active:scale-95 transition-transform"
+        >
+          <div className="flex flex-col text-right">
+            <span className="text-lg text-gray-800">پەیوەندیکردن</span>
+            <span className="text-xs text-gray-400">ناردنی پەیام بۆ بەڕێوەبەر (ئەدمین)</span>
+          </div>
+          <span className="text-2xl bg-gray-50 p-2 rounded-xl">✉️</span>
+        </Link>
+
         {/* ئەم بەشە تەنها ئەدمین دەیبینێت */}
         {isAdmin && (
           <Link 
