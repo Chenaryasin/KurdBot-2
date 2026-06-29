@@ -44,7 +44,9 @@ export default function RegisterPage() {
       if (!error && data) {
         photo_url = supabase.storage.from('profiles').getPublicUrl(fileName).data.publicUrl;
       } else {
-        console.error("Error uploading image:", error);
+        alert("کێشەیەک لە وێنەکەدا هەیە: " + (error?.message || "نەتوانرا ئەپلۆد بکرێت"));
+        setLoading(false);
+        return;
       }
     }
     

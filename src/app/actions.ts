@@ -78,6 +78,7 @@ export async function getPendingProfessionals() {
       name,
       phone,
       experience_years,
+      photo_url,
       created_at,
       cities ( name_ku ),
       categories ( name_ku, icon )

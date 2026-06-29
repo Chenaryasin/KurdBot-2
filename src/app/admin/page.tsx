@@ -54,13 +54,22 @@ export default function AdminPage() {
                 چاوەڕێی قبوڵکردن
               </div>
               
-              <div className="mt-2">
-                <h3 className="font-bold text-gray-800 text-lg">{prof.name}</h3>
-                <div className="text-sm text-gray-600 mt-2 space-y-1">
-                  <p>📞 مۆبایل: <span dir="ltr" className="font-mono">{prof.phone}</span></p>
-                  <p>📍 شار: {prof.cities?.name_ku}</p>
-                  <p>💼 پیشە: {prof.categories?.icon} {prof.categories?.name_ku}</p>
-                  <p>⭐ ئەزموون: {prof.experience_years} ساڵ</p>
+              <div className="mt-2 flex gap-3 items-start">
+                {prof.photo_url ? (
+                  <img src={prof.photo_url} alt={prof.name} className="w-16 h-16 rounded-xl object-cover flex-shrink-0 border border-gray-100 shadow-sm" />
+                ) : (
+                  <div className="w-16 h-16 bg-blue-50 rounded-xl flex items-center justify-center text-3xl flex-shrink-0 border border-blue-100">
+                    {prof.categories?.icon || '👤'}
+                  </div>
+                )}
+                <div>
+                  <h3 className="font-bold text-gray-800 text-lg">{prof.name}</h3>
+                  <div className="text-sm text-gray-600 mt-2 space-y-1">
+                    <p>📞 مۆبایل: <span dir="ltr" className="font-mono">{prof.phone}</span></p>
+                    <p>📍 شار: {prof.cities?.name_ku}</p>
+                    <p>💼 پیشە: {prof.categories?.icon} {prof.categories?.name_ku}</p>
+                    <p>⭐ ئەزموون: {prof.experience_years} ساڵ</p>
+                  </div>
                 </div>
               </div>
 
