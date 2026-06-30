@@ -126,14 +126,17 @@ export default function RegisterPage() {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">چەند ساڵ ئەزموونت هەیە؟</label>
-          <input 
+          <select 
             required
-            type="text"
             className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 outline-none focus:border-blue-500 transition-colors text-gray-900"
-            placeholder="نمونە: 5"
             value={formData.experience_years}
             onChange={(e) => setFormData({...formData, experience_years: e.target.value})}
-          />
+          >
+            <option value="">هەڵبژێرە...</option>
+            {Array.from({ length: 51 }, (_, i) => (
+              <option key={i} value={i.toString()}>{i} ساڵ</option>
+            ))}
+          </select>
         </div>
 
         <div>
