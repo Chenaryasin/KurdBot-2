@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react";
 import { getProfessionalById } from "../../actions";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 export default function ProfilePage() {
   const { id } = useParams();
+  const router = useRouter();
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -29,7 +30,7 @@ export default function ProfilePage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center text-gray-500 gap-4">
         <div>پڕۆفایل نەدۆزرایەوە!</div>
-        <Link href="/" className="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold">گەڕانەوە</Link>
+        <button onClick={() => router.back()} className="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold">گەڕانەوە</button>
       </div>
     );
   }
@@ -38,9 +39,9 @@ export default function ProfilePage() {
     <div className="flex flex-col min-h-screen bg-gray-50 pb-20">
       {/* Cover & Header */}
       <div className="bg-gradient-to-br from-blue-600 to-blue-800 pt-8 pb-16 px-4 rounded-b-[40px] relative">
-        <Link href="/" className="absolute top-6 left-4 w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-xl text-white">
+        <button onClick={() => router.back()} className="absolute top-6 left-4 w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-xl text-white active:scale-95 transition-transform">
           🔙
-        </Link>
+        </button>
         <div className="text-center text-white mt-4">
           <p className="text-blue-100 text-sm mb-1">{profile.categories?.icon} {profile.categories?.name_ku}</p>
           <h1 className="text-3xl font-bold">{profile.name}</h1>
