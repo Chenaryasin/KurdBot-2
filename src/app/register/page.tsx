@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { getCities, getCategories, registerProfessional } from "../actions";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import Cropper from 'react-easy-crop';
+import { getCroppedImg } from '@/lib/cropImage';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -21,6 +23,45 @@ export default function RegisterPage() {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  // Cropper states
+  const [imageSrc, setImageSrc] = useState<string | null>(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [previewSrc, setPreviewSrc] = useState<string | null>(null);
+
+  const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      const imageDataUrl = await readFile(file);
+      setImageSrc(imageDataUrl as string);
+    }
+  };
+
+  const readFile = (file: File) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.addEventListener('load', () => resolve(reader.result), false);
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const onCropComplete = useCallback((croppedArea: any, croppedAreaPixels: any) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  }, []);
+
+  const handleCropSave = async () => {
+    if (!imageSrc || !croppedAreaPixels) return;
+    try {
+      const croppedFile = await getCroppedImg(imageSrc, croppedAreaPixels);
+      setFile(croppedFile);
+      setPreviewSrc(URL.createObjectURL(croppedFile));
+      setImageSrc(null);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   useEffect(() => {
     async function loadFilters() {
@@ -171,13 +212,20 @@ export default function RegisterPage() {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">وێنەی پڕۆفایل (ئارەزوومەندانە)</label>
-          <div className="relative">
-             <input 
-               type="file"
-               accept="image/*"
-               onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
-               className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 outline-none focus:border-blue-500 transition-colors text-gray-900 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
-             />
+          <div className="flex flex-col gap-3">
+            {previewSrc && (
+              <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-blue-500 shadow-sm mx-auto">
+                <img src={previewSrc} alt="Preview" className="w-full h-full object-cover" />
+              </div>
+            )}
+            <div className="relative">
+               <input 
+                 type="file"
+                 accept="image/*"
+                 onChange={onFileChange}
+                 className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 outline-none focus:border-blue-500 transition-colors text-gray-900 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
+               />
+            </div>
           </div>
         </div>
 
@@ -190,6 +238,42 @@ export default function RegisterPage() {
         </button>
 
       </form>
+
+      {/* Cropper Modal */}
+      {imageSrc && (
+        <div className="fixed inset-0 z-50 bg-black flex flex-col">
+          <div className="relative flex-1">
+            <Cropper
+              image={imageSrc}
+              crop={crop}
+              zoom={zoom}
+              aspect={1}
+              cropShape="round"
+              showGrid={false}
+              onCropChange={setCrop}
+              onCropComplete={onCropComplete}
+              onZoomChange={setZoom}
+            />
+          </div>
+          <div className="p-6 bg-white flex justify-between items-center z-50 rounded-t-3xl">
+            <button 
+              type="button"
+              onClick={() => setImageSrc(null)}
+              className="px-6 py-3 bg-gray-200 text-gray-800 rounded-xl font-bold active:scale-95 transition-transform"
+            >
+              هەڵوەشاندنەوە
+            </button>
+            <button 
+              type="button"
+              onClick={handleCropSave}
+              className="px-8 py-3 bg-blue-600 text-white rounded-xl font-bold shadow-md active:scale-95 transition-transform"
+            >
+              بڕین و پاشەکەوت
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
