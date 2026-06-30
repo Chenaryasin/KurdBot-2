@@ -35,12 +35,14 @@ export default function EditProfilePage() {
           const authData = await getProfessionalByTelegramId(user.id);
           if (authData) {
             const fullProfile = await getProfessionalById(authData.id);
-            setProfile(fullProfile);
-            setFormData({
-              degree: fullProfile.degree || "",
-              skills: fullProfile.skills || "",
-              work_locations: fullProfile.work_locations || ""
-            });
+            if (fullProfile) {
+              setProfile(fullProfile);
+              setFormData({
+                degree: fullProfile.degree || "",
+                skills: fullProfile.skills || "",
+                work_locations: fullProfile.work_locations || ""
+              });
+            }
           }
         } else {
           // For testing outside telegram, you might mock a user ID here if needed
