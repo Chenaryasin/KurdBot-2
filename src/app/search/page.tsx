@@ -9,9 +9,29 @@ export default function SearchPage() {
   const [categories, setCategories] = useState<any[]>([]);
   const [professionals, setProfessionals] = useState<any[]>([]);
   
-  const [selectedCity, setSelectedCity] = useState<string>("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
-  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [selectedCity, setSelectedCity] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      const saved = sessionStorage.getItem("searchFilters");
+      if (saved) return JSON.parse(saved).city || "";
+    }
+    return "";
+  });
+  
+  const [selectedCategory, setSelectedCategory] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      const saved = sessionStorage.getItem("searchFilters");
+      if (saved) return JSON.parse(saved).category || "";
+    }
+    return "";
+  });
+  
+  const [searchQuery, setSearchQuery] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      const saved = sessionStorage.getItem("searchFilters");
+      if (saved) return JSON.parse(saved).query || "";
+    }
+    return "";
+  });
   
   const [loading, setLoading] = useState(true);
 
@@ -31,6 +51,14 @@ export default function SearchPage() {
       const data = await getProfessionals(selectedCity, selectedCategory, searchQuery);
       setProfessionals(data);
       setLoading(false);
+    }
+    
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("searchFilters", JSON.stringify({
+        city: selectedCity,
+        category: selectedCategory,
+        query: searchQuery
+      }));
     }
     
     // Debounce search slightly
