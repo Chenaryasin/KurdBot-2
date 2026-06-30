@@ -103,26 +103,34 @@ export default function SearchPage() {
           </div>
         ) : (
           professionals.map((prof) => (
-            <Link href={`/profile/${prof.id}`} key={prof.id} className="block active:scale-95 transition-transform">
-              <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4 hover:border-blue-200 hover:shadow-md transition-all">
-                <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden">
-                  {prof.photo_url ? (
-                    <img src={prof.photo_url} alt={prof.name} className="w-full h-full object-cover" />
-                  ) : (
-                    prof.categories?.icon || '👤'
-                  )}
+            <div key={prof.id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4 hover:border-blue-200 transition-all">
+              <Link href={`/profile/${prof.id}`} className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden active:scale-95 transition-transform block cursor-pointer">
+                {prof.photo_url ? (
+                  <img src={prof.photo_url} alt={prof.name} className="w-full h-full object-cover" />
+                ) : (
+                  prof.categories?.icon || '👤'
+                )}
+              </Link>
+              
+              <div className="flex-1 text-center">
+                <Link href={`/profile/${prof.id}`} className="block">
+                  <h3 className="font-bold text-gray-800 text-lg hover:text-blue-600 transition-colors">{prof.name}</h3>
+                </Link>
+                <div className="text-xs text-gray-500 mt-1 flex items-center justify-center gap-2">
+                  <span>📍 {prof.cities?.name_ku}</span>
+                  <span className="text-gray-300">|</span>
+                  <span>⭐ {prof.experience_years} ساڵ ئەزموون</span>
                 </div>
                 
-                <div className="flex-1 text-center">
-                  <h3 className="font-bold text-gray-800">{prof.name}</h3>
-                  <div className="text-xs text-gray-500 mt-1 flex items-center justify-center gap-2">
-                    <span>📍 {prof.cities?.name_ku}</span>
-                    <span className="text-gray-300">|</span>
-                    <span>⭐ {prof.experience_years} ساڵ ئەزموون</span>
-                  </div>
-                </div>
+                <a 
+                  href={`tel:${prof.phone}`}
+                  className="mt-3 bg-green-500 text-white py-2 rounded-xl text-sm font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform"
+                >
+                  <span>پەیوەندی بکە</span>
+                  <span className="font-mono text-xs mt-0.5" dir="ltr">{prof.phone}</span>
+                </a>
               </div>
-            </Link>
+            </div>
           ))
         )}
       </div>

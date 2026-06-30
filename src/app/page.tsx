@@ -7,6 +7,7 @@ import { getProfessionalByTelegramId } from "./actions";
 export default function HomePage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [hasProfile, setHasProfile] = useState(false);
+  const [username, setUsername] = useState("");
 
   useEffect(() => {
     async function checkUser() {
@@ -15,6 +16,10 @@ export default function HomePage() {
         tg.ready();
         tg.expand();
         const user = tg.initDataUnsafe?.user;
+        
+        if (user) {
+          setUsername(user.first_name);
+        }
         
         if (user?.id) {
           // Check if admin
@@ -46,6 +51,11 @@ export default function HomePage() {
           <span className="text-4xl">🛠️</span>
         </div>
         <h1 className="text-3xl font-extrabold text-gray-900 mb-2 tracking-tight">Kurd Master</h1>
+        
+        {username ? (
+          <h2 className="text-xl font-bold text-gray-800 mb-2">بەخێربێیت، {username} 👋</h2>
+        ) : null}
+        
         <p className="text-gray-500 text-sm">باشترین پسپۆڕەکانی کوردستان لێرە بدۆزەرەوە</p>
       </div>
 
