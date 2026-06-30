@@ -26,7 +26,12 @@ export default function ProfilePage() {
   }
 
   if (!profile) {
-    return <div className="min-h-screen flex items-center justify-center text-gray-500">پڕۆفایل نەدۆزرایەوە!</div>;
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center text-gray-500 gap-4">
+        <div>پڕۆفایل نەدۆزرایەوە!</div>
+        <Link href="/" className="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold">گەڕانەوە</Link>
+      </div>
+    );
   }
 
   return (

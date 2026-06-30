@@ -149,13 +149,15 @@ export default function AdminPage() {
                 </div>
                 
                 <div className="mt-2 flex gap-3 items-start">
-                  {prof.photo_url ? (
-                    <img src={prof.photo_url} alt={prof.name} className="w-16 h-16 rounded-xl object-cover flex-shrink-0 border border-gray-100 shadow-sm" />
-                  ) : (
-                    <div className="w-16 h-16 bg-blue-50 rounded-xl flex items-center justify-center text-3xl flex-shrink-0 border border-blue-100">
-                      {prof.categories?.icon || '👤'}
-                    </div>
-                  )}
+                  <Link href={`/profile/${prof.id}`} className="block flex-shrink-0 active:scale-95 transition-transform">
+                    {prof.photo_url ? (
+                      <img src={prof.photo_url} alt={prof.name} className="w-16 h-16 rounded-xl object-cover border border-gray-100 shadow-sm" />
+                    ) : (
+                      <div className="w-16 h-16 bg-blue-50 rounded-xl flex items-center justify-center text-3xl border border-blue-100">
+                        {prof.categories?.icon || '👤'}
+                      </div>
+                    )}
+                  </Link>
                   <div className="w-full">
                     <div className="flex justify-between items-center w-full">
                       <h3 className="font-bold text-gray-800 text-lg">{prof.name}</h3>
@@ -172,13 +174,6 @@ export default function AdminPage() {
                 </div>
 
                 <div className="mt-3 pt-3 border-t flex gap-2">
-                  <Link 
-                    href={`/profile/${prof.id}`}
-                    className="flex-1 bg-blue-50 text-blue-600 border border-blue-200 py-2 rounded-xl text-sm font-bold text-center active:scale-95 transition-transform"
-                  >
-                    پڕۆفایل ببینە
-                  </Link>
-
                   {activeTab === "pending" && (
                     <button 
                       onClick={() => handleApprove(prof.id)}

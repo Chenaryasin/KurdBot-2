@@ -18,14 +18,18 @@ export default function HomePage() {
         
         if (user?.id) {
           // Check if admin
-          if (user.id.toString() === process.env.NEXT_PUBLIC_ADMIN_TELEGRAM_ID) {
+          if (user.id === 1932967171) {
             setIsAdmin(true);
           }
           
           // Check if has profile
-          const profile = await getProfessionalByTelegramId(user.id);
-          if (profile) {
-            setHasProfile(true);
+          try {
+            const profile = await getProfessionalByTelegramId(user.id);
+            if (profile) {
+              setHasProfile(true);
+            }
+          } catch (e) {
+            // Ignore if columns don't exist yet
           }
         }
       }

@@ -120,11 +120,6 @@ export default function SearchPage() {
                     <span className="text-gray-300">|</span>
                     <span>⭐ {prof.experience_years} ساڵ ئەزموون</span>
                   </div>
-                  
-                  <div className="mt-3 bg-green-500 text-white py-2 rounded-xl text-sm font-bold flex items-center justify-center gap-2 pointer-events-none">
-                    <span>پڕۆفایل ببینە</span>
-                    <span>🔍</span>
-                  </div>
                 </div>
               </div>
             </Link>
