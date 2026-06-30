@@ -14,7 +14,7 @@ export async function getCategories() {
   return data || [];
 }
 
-export async function getProfessionals(cityId?: string, categoryId?: string) {
+export async function getProfessionals(cityId?: string, categoryId?: string, searchQuery: string = "") {
   let query = supabase
     .from("professionals")
     .select(`
@@ -31,11 +31,54 @@ export async function getProfessionals(cityId?: string, categoryId?: string) {
 
   if (cityId) query = query.eq("city_id", parseInt(cityId));
   if (categoryId) query = query.eq("category_id", parseInt(categoryId));
+  
+  if (searchQuery) {
+    const normalizedSearch = normalizeText(searchQuery);
+    query = query.or(`name.ilike.%${normalizedSearch}%,phone.ilike.%${normalizedSearch}%`);
+  }
 
   const { data, error } = await query.order("created_at", { ascending: false });
   if (error) console.error("Error fetching professionals:", error);
   
   return data || [];
+}
+
+export async function getProfessionalById(id: string) {
+  const { data, error } = await supabase
+    .from("professionals")
+    .select(`
+      id, name, phone, experience_years, photo_url, created_at, telegram_id,
+      degree, skills, work_locations,
+      cities ( name_ku ),
+      categories ( name_ku, icon )
+    `)
+    .eq("id", id)
+    .single();
+
+  if (error) {
+    console.error("Error fetching professional details:", error);
+    return null;
+  }
+  
+  // Fetch portfolio images
+  const { data: images } = await supabase
+    .from("portfolio_images")
+    .select("id, image_url")
+    .eq("professional_id", id)
+    .order("created_at", { ascending: false });
+
+  return { ...data, portfolio_images: images || [] };
+}
+
+export async function getProfessionalByTelegramId(telegramId: number) {
+  const { data, error } = await supabase
+    .from("professionals")
+    .select("id, name, is_approved")
+    .eq("telegram_id", telegramId)
+    .single();
+
+  if (error) return null;
+  return data;
 }
 
 export async function registerProfessional(formData: {
@@ -45,6 +88,7 @@ export async function registerProfessional(formData: {
   city_id: number;
   category_id: number;
   photo_url?: string | null;
+  telegram_id?: number | null;
 }) {
   const { error } = await supabase.from("professionals").insert([
     {
@@ -56,6 +100,36 @@ export async function registerProfessional(formData: {
 
   if (error) {
     console.error("Error registering:", error);
+    return { success: false, error: error.message };
+  }
+  return { success: true };
+}
+
+export async function updateProfessionalProfile(id: string, formData: {
+  degree?: string;
+  skills?: string;
+  work_locations?: string;
+  experience_years?: number;
+}) {
+  const { error } = await supabase
+    .from("professionals")
+    .update(formData)
+    .eq("id", id);
+
+  if (error) {
+    console.error("Error updating profile:", error);
+    return { success: false, error: error.message };
+  }
+  return { success: true };
+}
+
+export async function addPortfolioImage(professional_id: string, image_url: string) {
+  const { error } = await supabase
+    .from("portfolio_images")
+    .insert([{ professional_id, image_url }]);
+
+  if (error) {
+    console.error("Error adding portfolio image:", error);
     return { success: false, error: error.message };
   }
   return { success: true };

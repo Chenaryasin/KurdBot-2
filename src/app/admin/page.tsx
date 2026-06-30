@@ -172,6 +172,13 @@ export default function AdminPage() {
                 </div>
 
                 <div className="mt-3 pt-3 border-t flex gap-2">
+                  <Link 
+                    href={`/profile/${prof.id}`}
+                    className="flex-1 bg-blue-50 text-blue-600 border border-blue-200 py-2 rounded-xl text-sm font-bold text-center active:scale-95 transition-transform"
+                  >
+                    پڕۆفایل ببینە
+                  </Link>
+
                   {activeTab === "pending" && (
                     <button 
                       onClick={() => handleApprove(prof.id)}
