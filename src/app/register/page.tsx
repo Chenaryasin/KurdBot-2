@@ -130,17 +130,10 @@ export default function RegisterPage() {
             required
             type="text"
             inputMode="numeric"
-            pattern="[0-9٠-٩۰-۹]*"
             className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 outline-none focus:border-blue-500 transition-colors text-gray-900"
             placeholder="نمونە: 5"
             value={formData.experience_years}
-            onChange={(e) => {
-              const val = e.target.value;
-              // Only allow numbers (English, Kurdish, Arabic)
-              if (val === "" || /^[0-9٠-٩۰-۹]+$/.test(val)) {
-                setFormData({...formData, experience_years: val});
-              }
-            }}
+            onChange={(e) => setFormData({...formData, experience_years: e.target.value})}
           />
         </div>
 
