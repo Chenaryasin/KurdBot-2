@@ -128,9 +128,9 @@ export default function RegisterPage() {
           <label className="block text-sm font-medium text-gray-700 mb-1">چەند ساڵ ئەزموونت هەیە؟</label>
           <input 
             required
-            type="text"
-            inputMode="numeric"
-            className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 outline-none focus:border-blue-500 transition-colors text-gray-900"
+            type="tel"
+            dir="ltr"
+            className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 outline-none focus:border-blue-500 transition-colors text-right text-gray-900"
             placeholder="نمونە: 5"
             value={formData.experience_years}
             onChange={(e) => setFormData({...formData, experience_years: e.target.value})}
