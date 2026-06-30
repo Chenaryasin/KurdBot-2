@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getCities, getCategories, registerProfessional, normalizeText } from "../actions";
+import { getCities, getCategories, registerProfessional } from "../actions";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -53,7 +53,7 @@ export default function RegisterPage() {
     const result = await registerProfessional({
       name: formData.name,
       phone: formData.phone,
-      experience_years: parseInt(normalizeText(formData.experience_years) || "0"),
+      experience_years: parseInt(formData.experience_years || "0"),
       city_id: parseInt(formData.city_id),
       category_id: parseInt(formData.category_id),
       photo_url: photo_url

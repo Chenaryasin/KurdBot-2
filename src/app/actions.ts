@@ -165,7 +165,7 @@ export async function getPendingProfessionals() {
   return data || [];
 }
 
-export function normalizeText(text: string) {
+function normalizeText(text: string) {
   if (!text) return text;
   const arabicNumbers = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
   const persianNumbers = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
