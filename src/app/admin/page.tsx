@@ -20,6 +20,24 @@ export default function AdminPage() {
   
   const [loading, setLoading] = useState(true);
 
+  // Restore tab state on mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedTab = sessionStorage.getItem("adminActiveTab");
+      if (savedTab === "approved" || savedTab === "pending" || savedTab === "messages") {
+        setActiveTab(savedTab);
+      }
+    }
+  }, []);
+
+  const changeTab = (tab: "approved" | "pending" | "messages") => {
+    setActiveTab(tab);
+    setSearchQuery("");
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("adminActiveTab", tab);
+    }
+  };
+
   async function loadData() {
     setLoading(true);
     if (activeTab === "pending") {
@@ -77,19 +95,19 @@ export default function AdminPage() {
       {/* Tabs */}
       <div className="flex bg-white rounded-xl p-1 mb-4 shadow-sm border border-gray-100">
         <button 
-          onClick={() => { setActiveTab("approved"); setSearchQuery(""); }}
+          onClick={() => changeTab("approved")}
           className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${activeTab === "approved" ? "bg-blue-100 text-blue-700" : "text-gray-500"}`}
         >
           بەشداربوان
         </button>
         <button 
-          onClick={() => { setActiveTab("pending"); setSearchQuery(""); }}
+          onClick={() => changeTab("pending")}
           className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${activeTab === "pending" ? "bg-orange-100 text-orange-700" : "text-gray-500"}`}
         >
           چاوەڕوانی
         </button>
         <button 
-          onClick={() => { setActiveTab("messages"); setSearchQuery(""); }}
+          onClick={() => changeTab("messages")}
           className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${activeTab === "messages" ? "bg-green-100 text-green-700" : "text-gray-500"}`}
         >
           پەیامەکان
