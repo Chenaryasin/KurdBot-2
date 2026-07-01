@@ -129,7 +129,6 @@ export default function RegisterPage() {
   }
 
   return (
-  return (
     <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900 p-4 pb-28">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6 mt-2">
