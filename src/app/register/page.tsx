@@ -241,7 +241,7 @@ export default function RegisterPage() {
 
       {/* Cropper Modal */}
       {imageSrc && (
-        <div className="fixed inset-0 z-50 bg-black flex flex-col">
+        <div className="fixed inset-0 z-[100] bg-black flex flex-col">
           <div className="relative flex-1">
             <Cropper
               image={imageSrc}
@@ -255,18 +255,18 @@ export default function RegisterPage() {
               onZoomChange={setZoom}
             />
           </div>
-          <div className="p-6 bg-white flex justify-between items-center z-50 rounded-t-3xl">
+          <div className="p-6 bg-white dark:bg-gray-900 flex justify-between items-center z-[100] rounded-t-3xl border-t border-gray-100 dark:border-gray-800 pb-10">
             <button 
               type="button"
               onClick={() => setImageSrc(null)}
-              className="px-6 py-3 bg-gray-200 text-gray-800 rounded-xl font-bold active:scale-95 transition-transform"
+              className="px-6 py-3 bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-xl font-bold active:scale-95 transition-transform"
             >
               هەڵوەشاندنەوە
             </button>
             <button 
               type="button"
               onClick={handleCropSave}
-              className="px-8 py-3 bg-blue-600 text-white rounded-xl font-bold shadow-md active:scale-95 transition-transform"
+              className="px-8 py-3 bg-blue-600 dark:bg-blue-600 text-white rounded-xl font-bold shadow-md active:scale-95 transition-transform"
             >
               بڕین و پاشەکەوت
             </button>
