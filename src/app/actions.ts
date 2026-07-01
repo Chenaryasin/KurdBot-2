@@ -49,6 +49,7 @@ export async function getProfessionalById(id: string) {
     .select(`
       id, name, phone, experience_years, photo_url, created_at, telegram_id,
       degree, skills, work_locations,
+      city_id, category_id,
       cities ( name_ku ),
       categories ( name_ku, icon )
     `)
@@ -106,10 +107,14 @@ export async function registerProfessional(formData: {
 }
 
 export async function updateProfessionalProfile(id: string, formData: {
+  name?: string;
+  phone?: string;
+  experience_years?: number;
+  category_id?: number;
+  city_id?: number;
   degree?: string;
   skills?: string;
   work_locations?: string;
-  experience_years?: number;
 }) {
   const { error } = await supabase
     .from("professionals")

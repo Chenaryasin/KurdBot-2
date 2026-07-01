@@ -73,18 +73,7 @@ export default function HomePage() {
           <span className="text-3xl bg-blue-500 p-2 rounded-xl">🔍</span>
         </Link>
 
-        {hasProfile ? (
-          <Link 
-            href="/profile/edit"
-            className="w-full bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 text-gray-800 dark:text-gray-200 font-medium py-4 px-6 rounded-2xl flex items-center justify-between shadow-sm active:scale-95 transition-transform"
-          >
-            <div className="flex flex-col text-right">
-              <span className="text-lg">دەستکاریکردنی پڕۆفایل</span>
-              <span className="text-xs text-gray-400 dark:text-gray-500 mt-1">زانیاری و وێنەی کارەکانت زیادبکە</span>
-            </div>
-            <span className="text-2xl bg-gray-50 dark:bg-gray-700 p-2 rounded-xl">⚙️</span>
-          </Link>
-        ) : (
+        {!hasProfile && (
           <Link 
             href="/register"
             className="w-full bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 text-gray-800 dark:text-gray-200 font-medium py-4 px-6 rounded-2xl flex items-center justify-between shadow-sm active:scale-95 transition-transform"

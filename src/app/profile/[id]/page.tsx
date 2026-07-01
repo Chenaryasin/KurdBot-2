@@ -10,12 +10,23 @@ export default function ProfilePage() {
   const router = useRouter();
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isAuthorized, setIsAuthorized] = useState(false);
 
   useEffect(() => {
     async function loadProfile() {
       if (id) {
         const data = await getProfessionalById(id as string);
         setProfile(data);
+        
+        if (data && typeof window !== "undefined" && (window as any).Telegram?.WebApp) {
+          const user = (window as any).Telegram.WebApp.initDataUnsafe?.user;
+          if (user?.id) {
+            const tgId = user.id.toString();
+            if (tgId === "1932967171" || (data.telegram_id && data.telegram_id.toString() === tgId)) {
+              setIsAuthorized(true);
+            }
+          }
+        }
       }
       setLoading(false);
     }
@@ -42,6 +53,11 @@ export default function ProfilePage() {
         <button onClick={() => router.back()} className="absolute top-6 left-4 w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-xl text-white active:scale-95 transition-transform">
           🔙
         </button>
+        {isAuthorized && (
+          <Link href={`/profile/${id}/edit`} className="absolute top-6 right-4 w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-xl text-white active:scale-95 transition-transform">
+            ✏️
+          </Link>
+        )}
         <div className="text-center text-white mt-4">
           <p className="text-blue-100 text-sm mb-1">{profile.categories?.icon} {profile.categories?.name_ku}</p>
           <h1 className="text-3xl font-bold">{profile.name}</h1>
