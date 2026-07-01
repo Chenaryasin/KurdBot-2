@@ -49,7 +49,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 pb-20">
+    <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900 pb-20">
       {/* Cover & Header */}
       <div className="bg-gradient-to-br from-blue-600 to-blue-800 pt-8 pb-16 px-4 rounded-b-[40px] relative">
         <button onClick={() => router.back()} className="absolute top-6 left-4 w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-xl text-white active:scale-95 transition-transform">
@@ -68,12 +68,12 @@ export default function ProfilePage() {
 
       {/* Profile Info Card */}
       <div className="px-4 -mt-10">
-        <div className="bg-white rounded-3xl p-6 shadow-md border border-gray-100 relative">
-          <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-24 h-24 bg-white p-1 rounded-full shadow-md">
+        <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-md border border-gray-100 dark:border-gray-700 relative">
+          <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-24 h-24 bg-white dark:bg-gray-800 p-1 rounded-full shadow-md">
             {profile.photo_url ? (
-              <img src={profile.photo_url} alt={profile.name} className="w-full h-full object-cover rounded-full bg-blue-50" />
+              <img src={profile.photo_url} alt={profile.name} className="w-full h-full object-cover rounded-full bg-blue-50 dark:bg-gray-700" />
             ) : (
-              <div className="w-full h-full bg-blue-50 rounded-full flex items-center justify-center text-4xl">
+              <div className="w-full h-full bg-blue-50 dark:bg-gray-700 rounded-full flex items-center justify-center text-4xl">
                 {profile.categories?.icon || '👤'}
               </div>
             )}
@@ -81,8 +81,8 @@ export default function ProfilePage() {
           
           <div className="mt-12 text-center">
             <div className="flex flex-wrap justify-center gap-2 mb-6">
-              <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">📍 {profile.cities?.name_ku}</span>
-              <span className="bg-orange-50 text-orange-700 px-3 py-1 rounded-full text-sm font-medium">⭐ {profile.experience_years} ساڵ ئەزموون</span>
+              <span className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-3 py-1 rounded-full text-sm font-medium">📍 {profile.cities?.name_ku}</span>
+              <span className="bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 px-3 py-1 rounded-full text-sm font-medium">⭐ {profile.experience_years} ساڵ ئەزموون</span>
             </div>
 
             <a 
@@ -100,41 +100,41 @@ export default function ProfilePage() {
       <div className="px-4 mt-6 flex flex-col gap-4">
         
         {profile.degree && (
-          <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
-            <h3 className="font-bold text-gray-800 flex items-center gap-2 mb-2">
+          <div className="bg-white dark:bg-gray-800 p-5 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700">
+            <h3 className="font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2 mb-2">
               <span>🎓</span> بڕوانامە
             </h3>
-            <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-wrap">{profile.degree}</p>
+            <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">{profile.degree}</p>
           </div>
         )}
 
         {profile.skills && (
-          <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
-            <h3 className="font-bold text-gray-800 flex items-center gap-2 mb-2">
+          <div className="bg-white dark:bg-gray-800 p-5 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700">
+            <h3 className="font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2 mb-2">
               <span>🛠️</span> شارەزاییەکان
             </h3>
-            <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-wrap">{profile.skills}</p>
+            <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">{profile.skills}</p>
           </div>
         )}
 
         {profile.work_locations && (
-          <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
-            <h3 className="font-bold text-gray-800 flex items-center gap-2 mb-2">
+          <div className="bg-white dark:bg-gray-800 p-5 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700">
+            <h3 className="font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2 mb-2">
               <span>🏢</span> شوێنەکانی کارکردن
             </h3>
-            <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-wrap">{profile.work_locations}</p>
+            <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">{profile.work_locations}</p>
           </div>
         )}
 
         {/* Portfolio Gallery */}
         {profile.portfolio_images && profile.portfolio_images.length > 0 && (
-          <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 mt-2">
-            <h3 className="font-bold text-gray-800 flex items-center gap-2 mb-4">
+          <div className="bg-white dark:bg-gray-800 p-5 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 mt-2">
+            <h3 className="font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2 mb-4">
               <span>📸</span> وێنەی کارەکان
             </h3>
             <div className="grid grid-cols-2 gap-3">
               {profile.portfolio_images.map((img: any) => (
-                <div key={img.id} className="aspect-square rounded-2xl overflow-hidden bg-gray-100 border border-gray-200">
+                <div key={img.id} className="aspect-square rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
                   <img src={img.image_url} alt="Portfolio" className="w-full h-full object-cover" />
                 </div>
               ))}
