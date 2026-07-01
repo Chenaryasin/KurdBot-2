@@ -90,14 +90,19 @@ export default function RegisterPage() {
         return;
       }
     }
-    
+    let tgId = null;
+    if (typeof window !== "undefined" && (window as any).Telegram?.WebApp) {
+      tgId = (window as any).Telegram.WebApp.initDataUnsafe?.user?.id;
+    }
+
     const result = await registerProfessional({
       name: formData.name,
       phone: formData.phone,
       experience_years: parseInt(formData.experience_years || "0"),
       city_id: parseInt(formData.city_id),
       category_id: parseInt(formData.category_id),
-      photo_url: photo_url
+      photo_url: photo_url,
+      telegram_id: tgId
     });
 
     setLoading(false);
