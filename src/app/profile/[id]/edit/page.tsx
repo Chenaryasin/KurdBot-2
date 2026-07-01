@@ -248,12 +248,12 @@ export default function EditProfilePage() {
         {/* Texts */}
         <div>
           <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">🎓 بڕوانامە</label>
-          <input 
-            type="text" 
+          <textarea 
+            rows={3}
             placeholder="بۆ نمونە: دبلۆم لە تەکنەلۆژیا"
             value={formData.degree}
             onChange={(e) => setFormData({...formData, degree: e.target.value})}
-            className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
           />
         </div>
 
@@ -270,12 +270,12 @@ export default function EditProfilePage() {
 
         <div>
           <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">🏢 شوێنەکانی کارکردن</label>
-          <input 
-            type="text" 
+          <textarea 
+            rows={3}
             placeholder="بۆ نمونە: ناو بازاڕ، گەڕەکی بەختیاری..."
             value={formData.work_locations}
             onChange={(e) => setFormData({...formData, work_locations: e.target.value})}
-            className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
           />
         </div>
 
