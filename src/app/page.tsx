@@ -43,20 +43,20 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-6 space-y-8 pb-10">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900 p-6 space-y-8 pb-28">
       
       {/* Header section */}
-      <div className="text-center w-full">
-        <div className="w-24 h-24 bg-blue-100 rounded-[2rem] mx-auto mb-6 flex items-center justify-center shadow-sm">
+      <div className="text-center w-full mt-4">
+        <div className="w-24 h-24 bg-blue-100 dark:bg-blue-900/30 rounded-[2rem] mx-auto mb-6 flex items-center justify-center shadow-sm">
           <span className="text-4xl">🛠️</span>
         </div>
-        <h1 className="text-3xl font-extrabold text-gray-900 mb-2 tracking-tight">Kurd Master</h1>
+        <h1 className="text-3xl font-extrabold text-gray-900 dark:text-gray-100 mb-2 tracking-tight">Kurd Master</h1>
         
         {username ? (
-          <h2 className="text-xl font-bold text-gray-800 mb-2">بەخێربێیت، {username} 👋</h2>
+          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-2">بەخێربێیت، {username} 👋</h2>
         ) : null}
         
-        <p className="text-gray-500 text-sm">باشترین پسپۆڕەکانی کوردستان لێرە بدۆزەرەوە</p>
+        <p className="text-gray-500 dark:text-gray-400 text-sm">باشترین پسپۆڕەکانی کوردستان لێرە بدۆزەرەوە</p>
       </div>
 
       {/* Action Buttons */}
@@ -64,11 +64,11 @@ export default function HomePage() {
         
         <Link 
           href="/search"
-          className="w-full bg-blue-600 text-white font-bold py-5 px-6 rounded-2xl flex items-center justify-between shadow-lg shadow-blue-200 active:scale-95 transition-transform"
+          className="w-full bg-blue-600 dark:bg-blue-600 text-white font-bold py-5 px-6 rounded-2xl flex items-center justify-between shadow-lg shadow-blue-200 dark:shadow-none active:scale-95 transition-transform"
         >
           <div className="flex flex-col text-right">
             <span className="text-xl">دۆزینەوەی پسپۆڕ</span>
-            <span className="text-blue-100 text-xs font-medium">بەدوای وەستادا بگەڕێ بەپێی شار و پیشە</span>
+            <span className="text-blue-100 text-xs font-medium mt-1">بەدوای وەستادا بگەڕێ بەپێی شار و پیشە</span>
           </div>
           <span className="text-3xl bg-blue-500 p-2 rounded-xl">🔍</span>
         </Link>
@@ -76,52 +76,50 @@ export default function HomePage() {
         {hasProfile ? (
           <Link 
             href="/profile/edit"
-            className="w-full bg-white border-2 border-gray-100 text-gray-800 font-medium py-4 px-6 rounded-2xl flex items-center justify-between shadow-sm active:scale-95 transition-transform"
+            className="w-full bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 text-gray-800 dark:text-gray-200 font-medium py-4 px-6 rounded-2xl flex items-center justify-between shadow-sm active:scale-95 transition-transform"
           >
             <div className="flex flex-col text-right">
-              <span className="text-lg text-gray-800">دەستکاریکردنی پڕۆفایل</span>
-              <span className="text-xs text-gray-400">زانیاری و وێنەی کارەکانت زیادبکە</span>
+              <span className="text-lg">دەستکاریکردنی پڕۆفایل</span>
+              <span className="text-xs text-gray-400 dark:text-gray-500 mt-1">زانیاری و وێنەی کارەکانت زیادبکە</span>
             </div>
-            <span className="text-2xl bg-gray-50 p-2 rounded-xl">⚙️</span>
+            <span className="text-2xl bg-gray-50 dark:bg-gray-700 p-2 rounded-xl">⚙️</span>
           </Link>
         ) : (
           <Link 
             href="/register"
-            className="w-full bg-white border-2 border-gray-100 text-gray-800 font-medium py-4 px-6 rounded-2xl flex items-center justify-between shadow-sm active:scale-95 transition-transform"
+            className="w-full bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 text-gray-800 dark:text-gray-200 font-medium py-4 px-6 rounded-2xl flex items-center justify-between shadow-sm active:scale-95 transition-transform"
           >
             <div className="flex flex-col text-right">
-              <span className="text-lg text-gray-800">خۆتۆمارکردن</span>
-              <span className="text-xs text-gray-400">وەک پسپۆڕ لە بوارێکدا خۆت تۆمار بکە</span>
+              <span className="text-lg">خۆتۆمارکردن</span>
+              <span className="text-xs text-gray-400 dark:text-gray-500 mt-1">وەک پسپۆڕ لە بوارێکدا خۆت تۆمار بکە</span>
             </div>
-            <span className="text-2xl bg-gray-50 p-2 rounded-xl">💼</span>
+            <span className="text-2xl bg-gray-50 dark:bg-gray-700 p-2 rounded-xl">💼</span>
           </Link>
         )}
 
         <Link 
           href="/contact"
-          className="w-full bg-white border-2 border-gray-100 text-gray-800 font-medium py-4 px-6 rounded-2xl flex items-center justify-between shadow-sm active:scale-95 transition-transform"
+          className="w-full bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 text-gray-800 dark:text-gray-200 font-medium py-4 px-6 rounded-2xl flex items-center justify-between shadow-sm active:scale-95 transition-transform"
         >
           <div className="flex flex-col text-right">
-            <span className="text-lg text-gray-800">پەیوەندیکردن</span>
-            <span className="text-xs text-gray-400">ناردنی پەیام بۆ بەڕێوەبەر (ئەدمین)</span>
+            <span className="text-lg">پەیوەندیکردن بە ئێمە</span>
+            <span className="text-xs text-gray-400 dark:text-gray-500 mt-1">پێشنیار یان کێشەکانت بنێرە</span>
           </div>
-          <span className="text-2xl bg-gray-50 p-2 rounded-xl">✉️</span>
+          <span className="text-2xl bg-gray-50 dark:bg-gray-700 p-2 rounded-xl">💬</span>
         </Link>
+      </div>
 
-        {/* ئەم بەشە تەنها ئەدمین دەیبینێت */}
-        {isAdmin && (
+      {isAdmin && (
+        <div className="w-full max-w-sm pt-4 border-t border-gray-200 dark:border-gray-700">
           <Link 
             href="/admin"
-            className="w-full mt-4 bg-red-50 border border-red-200 text-red-700 font-medium py-4 px-6 rounded-2xl flex items-center justify-between shadow-sm active:scale-95 transition-transform"
+            className="w-full bg-gray-900 dark:bg-gray-700 text-white font-medium py-3 rounded-xl flex items-center justify-center shadow-md active:scale-95 transition-transform"
           >
-            <div className="flex flex-col text-right">
-              <span className="text-lg font-bold">بەشی ئەدمین</span>
-              <span className="text-xs text-red-500">پەسەندکردنی وەستاکان</span>
-            </div>
-            <span className="text-2xl bg-white p-2 rounded-xl border border-red-100">👑</span>
+            <span className="ml-2">بەشی ئەدمین</span>
+            <span className="text-lg">👑</span>
           </Link>
-        )}
-      </div>
+        </div>
+      )}
 
       <div className="mt-auto pt-8 text-xs text-gray-400">
         دروستکراوە بۆ خزمەتی هاوڵاتیان

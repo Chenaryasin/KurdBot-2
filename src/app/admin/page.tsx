@@ -6,31 +6,38 @@ import {
   getAdminApprovedProfessionals, 
   approveProfessional, 
   deleteProfessional,
-  getMessages 
+  getMessages,
+  getAdminAnnouncements,
+  postAnnouncement
 } from "../actions";
 import Link from "next/link";
+import { Send, Clock } from "lucide-react";
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<"approved" | "pending" | "messages">("pending");
+  const [activeTab, setActiveTab] = useState<"approved" | "pending" | "messages" | "announcements">("pending");
   const [searchQuery, setSearchQuery] = useState("");
   
   const [pending, setPending] = useState<any[]>([]);
   const [approved, setApproved] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
+  const [announcements, setAnnouncements] = useState<any[]>([]);
   
   const [loading, setLoading] = useState(true);
+  const [announcementTitle, setAnnouncementTitle] = useState("");
+  const [announcementContent, setAnnouncementContent] = useState("");
+  const [postingAnnouncement, setPostingAnnouncement] = useState(false);
 
   // Restore tab state on mount
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const savedTab = sessionStorage.getItem("adminActiveTab");
-      if (savedTab === "approved" || savedTab === "pending" || savedTab === "messages") {
+      const savedTab = sessionStorage.getItem("adminActiveTab") as any;
+      if (savedTab === "approved" || savedTab === "pending" || savedTab === "messages" || savedTab === "announcements") {
         setActiveTab(savedTab);
       }
     }
   }, []);
 
-  const changeTab = (tab: "approved" | "pending" | "messages") => {
+  const changeTab = (tab: "approved" | "pending" | "messages" | "announcements") => {
     setActiveTab(tab);
     setSearchQuery("");
     if (typeof window !== "undefined") {
@@ -49,9 +56,29 @@ export default function AdminPage() {
     } else if (activeTab === "messages") {
       const data = await getMessages();
       setMessages(data);
+    } else if (activeTab === "announcements") {
+      const data = await getAdminAnnouncements();
+      setAnnouncements(data);
     }
     setLoading(false);
   }
+
+  const handlePostAnnouncement = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!announcementTitle.trim() || !announcementContent.trim()) return;
+    
+    setPostingAnnouncement(true);
+    const res = await postAnnouncement(announcementTitle, announcementContent);
+    setPostingAnnouncement(false);
+    
+    if (res.success) {
+      setAnnouncementTitle("");
+      setAnnouncementContent("");
+      loadData();
+    } else {
+      alert("هەڵەیەک ڕوویدا لە ناردنی پەیامەکە: " + res.error);
+    }
+  };
 
   // Reload when tab or search query changes
   useEffect(() => {
@@ -93,7 +120,7 @@ export default function AdminPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex bg-white rounded-xl p-1 mb-4 shadow-sm border border-gray-100">
+      <div className="flex bg-white rounded-xl p-1 mb-4 shadow-sm border border-gray-100 flex-wrap">
         <button 
           onClick={() => changeTab("approved")}
           className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${activeTab === "approved" ? "bg-blue-100 text-blue-700" : "text-gray-500"}`}
@@ -110,7 +137,13 @@ export default function AdminPage() {
           onClick={() => changeTab("messages")}
           className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${activeTab === "messages" ? "bg-green-100 text-green-700" : "text-gray-500"}`}
         >
-          پەیامەکان
+          کۆنتێر
+        </button>
+        <button 
+          onClick={() => changeTab("announcements")}
+          className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${activeTab === "announcements" ? "bg-purple-100 text-purple-700" : "text-gray-500"}`}
+        >
+          بڵاوکراوەکان
         </button>
       </div>
 
@@ -130,6 +163,63 @@ export default function AdminPage() {
       {/* Content Area */}
       {loading ? (
         <div className="text-center text-gray-400 py-10">خەریکی گەڕانە...</div>
+      ) : activeTab === "announcements" ? (
+        <div className="flex flex-col gap-6">
+          <form onSubmit={handlePostAnnouncement} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+            <h2 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <Send size={18} className="text-purple-600" />
+              ناردنی پەیامی نوێ بۆ بەکارهێنەران
+            </h2>
+            <input
+              type="text"
+              placeholder="سەردێڕی پەیام..."
+              value={announcementTitle}
+              onChange={(e) => setAnnouncementTitle(e.target.value)}
+              className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 mb-3 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              required
+            />
+            <textarea
+              placeholder="ناوەڕۆکی پەیامەکەت بنووسە..."
+              value={announcementContent}
+              onChange={(e) => setAnnouncementContent(e.target.value)}
+              className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 mb-3 h-32 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              required
+            />
+            <button
+              type="submit"
+              disabled={postingAnnouncement}
+              className="w-full bg-purple-600 text-white font-bold py-3 rounded-xl shadow-md active:scale-95 transition-transform disabled:opacity-70"
+            >
+              {postingAnnouncement ? "چاوەڕێ بکە..." : "بڵاوکردنەوە"}
+            </button>
+          </form>
+
+          <div>
+            <h3 className="font-bold text-gray-700 mb-3">پەیامەکانی پێشوو</h3>
+            {announcements.length === 0 ? (
+              <div className="text-center text-gray-400 py-6 bg-white rounded-2xl border border-dashed border-gray-200">
+                هیچ پەیامێک نییە!
+              </div>
+            ) : (
+              <div className="flex flex-col gap-4">
+                {announcements.map((announcement) => (
+                  <div key={announcement.id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-2">
+                    <div className="flex justify-between items-start border-b pb-2">
+                      <h3 className="font-bold text-gray-800">{announcement.title}</h3>
+                      <span className="text-xs text-gray-400 flex items-center gap-1" dir="ltr">
+                        <Clock size={12} />
+                        {new Date(announcement.created_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <div className="mt-2 text-gray-800 text-sm leading-relaxed whitespace-pre-wrap">
+                      {announcement.content}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       ) : activeTab === "messages" ? (
         // MESSAGES TAB
         messages.length === 0 ? (

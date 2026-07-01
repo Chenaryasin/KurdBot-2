@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Noto_Kufi_Arabic } from "next/font/google";
 import "./globals.css";
 import Script from "next/script";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import BottomNav from "@/components/BottomNav";
 
 const notoKufi = Noto_Kufi_Arabic({
   subsets: ["arabic"],
@@ -20,16 +22,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ku" dir="rtl">
+    <html lang="ku" dir="rtl" suppressHydrationWarning>
       <head>
         <Script src="https://telegram.org/js/telegram-web-app.js" strategy="beforeInteractive" />
       </head>
       <body
-        className={`${notoKufi.variable} antialiased bg-gray-50 text-gray-900 font-sans`}
+        className={`${notoKufi.variable} antialiased bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 font-sans`}
       >
-        <main className="max-w-md mx-auto min-h-screen bg-white shadow-xl relative overflow-hidden">
-          {children}
-        </main>
+        <ThemeProvider>
+          <main className="max-w-md mx-auto min-h-screen bg-white dark:bg-gray-900 shadow-xl relative overflow-x-hidden pb-24">
+            {children}
+            <BottomNav />
+          </main>
+        </ThemeProvider>
       </body>
     </html>
   );

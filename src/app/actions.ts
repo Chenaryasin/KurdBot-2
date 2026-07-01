@@ -265,3 +265,21 @@ export async function getMessages() {
   if (error) console.error("Error fetching messages:", error);
   return data || [];
 }
+
+export async function postAnnouncement(title: string, content: string) {
+  const { error } = await supabase.from("announcements").insert([{ title, content }]);
+  if (error) {
+    console.error("Error posting announcement:", error);
+    return { success: false, error: error.message };
+  }
+  return { success: true };
+}
+
+export async function getAdminAnnouncements() {
+  const { data, error } = await supabase
+    .from("announcements")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (error) console.error("Error fetching admin announcements:", error);
+  return data || [];
+}
