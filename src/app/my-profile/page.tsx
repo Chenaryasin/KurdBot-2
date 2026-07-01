@@ -14,6 +14,12 @@ export default function MyProfilePage() {
         const tgId = tg.initDataUnsafe?.user?.id?.toString();
         
         if (tgId) {
+          // If admin, go to admin page
+          if (tgId === "1932967171") {
+            router.replace("/admin");
+            return;
+          }
+
           const { data, error } = await supabase
             .from("professionals")
             .select("id")

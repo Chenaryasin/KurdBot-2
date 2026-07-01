@@ -129,23 +129,24 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 p-4 pb-10">
+  return (
+    <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900 p-4 pb-28">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <Link href="/" className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-xl border border-gray-100">
+      <div className="flex items-center gap-3 mb-6 mt-2">
+        <Link href="/" className="w-10 h-10 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center shadow-sm text-xl border border-gray-100 dark:border-gray-700 active:scale-95 transition-transform">
           🔙
         </Link>
-        <h1 className="text-xl font-bold text-gray-800">خۆتۆمارکردن</h1>
+        <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">خۆتۆمارکردن</h1>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 flex flex-col gap-4">
+      <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 p-5 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col gap-4">
         
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">ناوی تەواو یان ناوی کلینیک</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">ناوی تەواو یان ناوی کلینیک</label>
           <input 
             required
             type="text"
-            className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 outline-none focus:border-blue-500 transition-colors text-gray-900"
+            className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 outline-none focus:border-blue-500 transition-colors text-gray-900 dark:text-gray-100"
             placeholder="نمونە: وەستا دارا"
             value={formData.name}
             onChange={(e) => setFormData({...formData, name: e.target.value})}
@@ -153,12 +154,12 @@ export default function RegisterPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">ژمارەی مۆبایل</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">ژمارەی مۆبایل</label>
           <input 
             required
             type="tel"
             dir="ltr"
-            className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 outline-none focus:border-blue-500 transition-colors text-right text-gray-900"
+            className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 outline-none focus:border-blue-500 transition-colors text-right text-gray-900 dark:text-gray-100"
             placeholder="07XX XXX XXXX"
             value={formData.phone}
             onChange={(e) => setFormData({...formData, phone: e.target.value})}
@@ -166,10 +167,10 @@ export default function RegisterPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">چەند ساڵ ئەزموونت هەیە؟</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">چەند ساڵ ئەزموونت هەیە؟</label>
           <select 
             required
-            className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 outline-none focus:border-blue-500 transition-colors text-gray-900"
+            className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 outline-none focus:border-blue-500 transition-colors text-gray-900 dark:text-gray-100"
             value={formData.experience_years}
             onChange={(e) => setFormData({...formData, experience_years: e.target.value})}
           >
@@ -181,10 +182,10 @@ export default function RegisterPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">شار</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">شار</label>
           <select 
             required
-            className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 outline-none focus:border-blue-500 transition-colors text-gray-900"
+            className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 outline-none focus:border-blue-500 transition-colors text-gray-900 dark:text-gray-100"
             value={formData.city_id}
             onChange={(e) => setFormData({...formData, city_id: e.target.value})}
           >
@@ -196,10 +197,10 @@ export default function RegisterPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">پیشە</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">پیشە</label>
           <select 
             required
-            className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 outline-none focus:border-blue-500 transition-colors text-gray-900"
+            className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 outline-none focus:border-blue-500 transition-colors text-gray-900 dark:text-gray-100"
             value={formData.category_id}
             onChange={(e) => setFormData({...formData, category_id: e.target.value})}
           >
@@ -211,7 +212,7 @@ export default function RegisterPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">وێنەی پڕۆفایل (ئارەزوومەندانە)</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">وێنەی پڕۆفایل (ئارەزوومەندانە)</label>
           <div className="flex flex-col gap-3">
             {previewSrc && (
               <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-blue-500 shadow-sm mx-auto">
@@ -223,7 +224,7 @@ export default function RegisterPage() {
                  type="file"
                  accept="image/*"
                  onChange={onFileChange}
-                 className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 outline-none focus:border-blue-500 transition-colors text-gray-900 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
+                 className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 outline-none focus:border-blue-500 transition-colors text-gray-900 dark:text-gray-100 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 dark:file:bg-blue-900/30 file:text-blue-700 dark:file:text-blue-400 hover:file:bg-blue-100 dark:hover:file:bg-blue-900/50 cursor-pointer"
                />
             </div>
           </div>
