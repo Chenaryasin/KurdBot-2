@@ -19,7 +19,9 @@ export default function ProfilePage() {
         setProfile(data);
         
         if (data && typeof window !== "undefined" && (window as any).Telegram?.WebApp) {
-          const user = (window as any).Telegram.WebApp.initDataUnsafe?.user;
+          const tg = (window as any).Telegram.WebApp;
+          tg.ready();
+          const user = tg.initDataUnsafe?.user;
           if (user?.id) {
             const tgId = user.id.toString();
             if (tgId === "1932967171" || (data.telegram_id && data.telegram_id.toString() === tgId)) {
