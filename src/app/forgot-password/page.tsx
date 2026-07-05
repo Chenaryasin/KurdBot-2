@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { resetPassword, checkPhoneExists, loginWithPassword } from "../auth-actions";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 
-export default function ForgotPasswordPage() {
+function ForgotPasswordContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialPhone = searchParams.get("phone") || "";
@@ -230,5 +230,13 @@ export default function ForgotPasswordPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function ForgotPasswordPage() {
+  return (
+    <Suspense fallback={<div>چاوەڕێبە...</div>}>
+      <ForgotPasswordContent />
+    </Suspense>
   );
 }
