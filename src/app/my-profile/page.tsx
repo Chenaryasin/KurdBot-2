@@ -32,7 +32,7 @@ export default function MyProfilePage() {
             setProfessionalId(data.id.toString());
           }
         } else {
-          router.replace("/login");
+          router.replace("/");
         }
       } catch (e) {
         console.error(e);
@@ -129,14 +129,6 @@ export default function MyProfilePage() {
             </div>
           </div>
         </div>
-
-        <button 
-          onClick={handleLogout}
-          className="w-full mt-6 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 font-bold py-4 px-6 rounded-2xl flex items-center justify-center gap-2 shadow-sm border border-red-100 dark:border-red-900/30 active:scale-95 transition-transform"
-        >
-          <LogOut size={20} />
-          <span>دەرچوون (Logout)</span>
-        </button>
 
       </div>
     </div>

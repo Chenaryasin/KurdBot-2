@@ -11,6 +11,8 @@ const notoKufi = Noto_Kufi_Arabic({
   variable: "--font-noto-kufi",
 });
 
+import TelegramAuthWrapper from "@/components/TelegramAuthWrapper";
+
 export const metadata: Metadata = {
   title: "خزمەتگوزارییەکانم",
   description: "دۆزینەوەی باشترین وەستا و پسپۆڕەکان لە کوردستان و عێراق",
@@ -30,10 +32,12 @@ export default function RootLayout({
         className={`${notoKufi.variable} antialiased bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 font-sans`}
       >
         <ThemeProvider>
-          <main className="max-w-md mx-auto min-h-screen bg-white dark:bg-gray-900 shadow-xl relative overflow-x-hidden pb-24">
-            {children}
-            <BottomNav />
-          </main>
+          <TelegramAuthWrapper>
+            <main className="max-w-md mx-auto min-h-screen bg-white dark:bg-gray-900 shadow-xl relative overflow-x-hidden pb-24">
+              {children}
+              <BottomNav />
+            </main>
+          </TelegramAuthWrapper>
         </ThemeProvider>
       </body>
     </html>

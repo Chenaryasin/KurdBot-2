@@ -1,7 +1,6 @@
 "use server";
 
 import { supabase } from "@/lib/supabase";
-import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
 
@@ -12,53 +11,41 @@ function normalizeText(text: string) {
   const arabicNumbers = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
   const persianNumbers = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
   
-  let result = text;
+  let result = text.trim().replace(/\s+/g, '');
   for (let i = 0; i < 10; i++) {
     result = result.split(arabicNumbers[i]).join(i.toString())
                    .split(persianNumbers[i]).join(i.toString());
   }
+  
+  if (result.startsWith("0")) {
+    result = "+964" + result.substring(1);
+  } else if (!result.startsWith("+")) {
+    result = "+964" + result;
+  }
+  
   return result;
 }
 
-export async function checkPhoneExists(phone: string) {
-  const normPhone = normalizeText(phone);
-  const { data, error } = await supabase
-    .from("users")
-    .select("id")
-    .eq("phone", normPhone)
-    .single();
-
-  if (data) {
-    return { exists: true };
-  }
-  return { exists: false };
-}
-
-export async function loginWithPassword(phone: string, password: string) {
-  const normPhone = normalizeText(phone);
+export async function loginWithTelegram(telegramId: number) {
+  // Check if user exists in the database
   const { data: user, error } = await supabase
     .from("users")
     .select("*")
-    .eq("phone", normPhone)
+    .eq("telegram_id", telegramId)
     .single();
 
   if (!user || error) {
-    return { success: false, error: "هەژمار نەدۆزرایەوە" };
+    // User does not exist, they need to register
+    return { success: true, registered: false };
   }
 
-  const isValid = await bcrypt.compare(password, user.password_hash);
-  if (!isValid) {
-    return { success: false, error: "وشەی نهێنی هەڵەیە" };
-  }
-
-  // Create JWT Token
+  // User exists, log them in
   const token = jwt.sign(
-    { id: user.id, name: user.name, phone: user.phone },
+    { id: user.id, name: user.name, phone: user.phone, telegram_id: user.telegram_id },
     JWT_SECRET,
     { expiresIn: "30d" }
   );
 
-  // Set Cookie
   const cookieStore = await cookies();
   cookieStore.set("auth_token", token, {
     httpOnly: true,
@@ -67,27 +54,32 @@ export async function loginWithPassword(phone: string, password: string) {
     path: "/",
   });
 
-  return { success: true };
+  return { success: true, registered: true };
 }
 
-export async function registerUser(data: { name: string; phone: string; city_id: number; password: string }) {
+export async function registerUserWithTelegram(data: { name: string; phone: string; city_id: number; telegram_id: number }) {
   const normPhone = normalizeText(data.phone);
   
-  // Check if exists
-  const check = await checkPhoneExists(normPhone);
-  if (check.exists) {
-    return { success: false, error: "ئەم ژمارەیە پێشتر تۆمارکراوە" };
+  // Check if phone or telegram_id already exists
+  const { data: existingUser } = await supabase
+    .from("users")
+    .select("id")
+    .or(`phone.eq.${normPhone},telegram_id.eq.${data.telegram_id}`)
+    .single();
+
+  if (existingUser) {
+    return { success: false, error: "ئەم ژمارەیە یان ئەم هەژمارەی تیلیگرام پێشتر تۆمارکراوە" };
   }
 
-  const hashedPassword = await bcrypt.hash(data.password, 10);
-
+  // Create new user
   const { data: newUser, error } = await supabase
     .from("users")
     .insert([{
       name: data.name,
       phone: normPhone,
       city_id: data.city_id,
-      password_hash: hashedPassword
+      telegram_id: data.telegram_id,
+      password_hash: "telegram_auth" // dummy string as we no longer use passwords
     }])
     .select()
     .single();
@@ -99,7 +91,7 @@ export async function registerUser(data: { name: string; phone: string; city_id:
 
   // Auto login
   const token = jwt.sign(
-    { id: newUser.id, name: newUser.name, phone: newUser.phone },
+    { id: newUser.id, name: newUser.name, phone: newUser.phone, telegram_id: newUser.telegram_id },
     JWT_SECRET,
     { expiresIn: "30d" }
   );
@@ -111,22 +103,6 @@ export async function registerUser(data: { name: string; phone: string; city_id:
     maxAge: 60 * 60 * 24 * 30,
     path: "/",
   });
-
-  return { success: true };
-}
-
-export async function resetPassword(phone: string, newPassword: string) {
-  const normPhone = normalizeText(phone);
-  const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-  const { error } = await supabase
-    .from("users")
-    .update({ password_hash: hashedPassword })
-    .eq("phone", normPhone);
-
-  if (error) {
-    return { success: false, error: "کێشەیەک لە گۆڕینی وشەی نهێنی ڕوویدا" };
-  }
 
   return { success: true };
 }
@@ -143,7 +119,7 @@ export async function getSessionUser() {
   if (!token) return null;
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { id: number; name: string; phone: string };
+    const decoded = jwt.verify(token, JWT_SECRET) as { id: number; name: string; phone: string; telegram_id: number };
     return decoded;
   } catch (e) {
     return null;
