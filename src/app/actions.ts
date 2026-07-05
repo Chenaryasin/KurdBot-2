@@ -90,6 +90,7 @@ export async function registerProfessional(formData: {
   category_id: number;
   photo_url?: string | null;
   telegram_id?: number | null;
+  user_id?: number | null;
 }) {
   const { error } = await supabase.from("professionals").insert([
     {

@@ -1,38 +1,28 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { registerUser } from "../auth-actions";
-import { getCities } from "../actions";
-import { useRouter } from "next/navigation";
+import { resetPassword, checkPhoneExists, loginWithPassword } from "../auth-actions";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 
-export default function RegisterPage() {
+export default function ForgotPasswordPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialPhone = searchParams.get("phone") || "";
   
-  // Steps: 1: Details, 2: OTP, 3: Password
+  // Steps: 1: Phone, 2: OTP, 3: New Password
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const [cities, setCities] = useState<any[]>([]);
-  
-  const [formData, setFormData] = useState({
-    name: "",
-    phone: "",
-    city_id: ""
-  });
-  
+  const [phone, setPhone] = useState(initialPhone);
   const [otp, setOtp] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
-
-  useEffect(() => {
-    getCities().then(setCities);
-  }, []);
 
   const setupRecaptcha = () => {
     if (!(window as any).recaptchaVerifier) {
@@ -42,17 +32,24 @@ export default function RegisterPage() {
     }
   };
 
-  const handleDetailsSubmit = async (e: React.FormEvent) => {
+  const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
+
+    // 1. Check if user exists
+    const check = await checkPhoneExists(phone);
+    if (!check.exists) {
+      setError("هیچ هەژمارێک بەم ژمارەیە نییە");
+      setLoading(false);
+      return;
+    }
 
     try {
       setupRecaptcha();
       const appVerifier = (window as any).recaptchaVerifier;
       
-      // Formatting phone for Firebase (needs country code if not present, assuming +964 for Iraq)
-      let phoneNumber = formData.phone;
+      let phoneNumber = phone;
       if (phoneNumber.startsWith("0")) {
         phoneNumber = "+964" + phoneNumber.substring(1);
       } else if (!phoneNumber.startsWith("+")) {
@@ -78,7 +75,6 @@ export default function RegisterPage() {
 
     try {
       await confirmationResult.confirm(otp);
-      // OTP Verified successfully!
       setStep(3);
     } catch (err) {
       console.error(err);
@@ -101,14 +97,10 @@ export default function RegisterPage() {
     setLoading(true);
     setError("");
 
-    const res = await registerUser({
-      name: formData.name,
-      phone: formData.phone,
-      city_id: parseInt(formData.city_id),
-      password: password
-    });
-
+    const res = await resetPassword(phone, password);
     if (res.success) {
+      // Auto login after reset
+      await loginWithPassword(phone, password);
       router.push("/");
     } else {
       setError(res.error || "کێشەیەک ڕوویدا");
@@ -120,51 +112,28 @@ export default function RegisterPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col justify-center items-center px-4 py-8">
       <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-3xl shadow-lg p-8">
         <h1 className="text-2xl font-bold text-center text-gray-900 dark:text-white mb-6">
-          دروستکردنی هەژماری نوێ
+          گێڕانەوەی وشەی نهێنی
         </h1>
 
         <div id="recaptcha-container"></div>
 
         {step === 1 && (
-          <form onSubmit={handleDetailsSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">ناوی تەواو</label>
-              <input
-                type="text"
-                placeholder="ناوی سیانیت بنووسە"
-                value={formData.name}
-                onChange={(e) => setFormData({...formData, name: e.target.value})}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-            
+          <form onSubmit={handlePhoneSubmit} className="space-y-4">
+            <p className="text-sm text-gray-600 dark:text-gray-400 text-center mb-4">
+              ژمارە مۆبایلەکەت بنووسە بۆ ئەوەی کۆدی گۆڕینی وشەی نهێنیت بۆ بنێرین.
+            </p>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">ژمارەی مۆبایل</label>
               <input
                 type="tel"
                 dir="ltr"
                 placeholder="0750 123 4567"
-                value={formData.phone}
-                onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">شار</label>
-              <select
-                value={formData.city_id}
-                onChange={(e) => setFormData({...formData, city_id: e.target.value})}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              >
-                <option value="">شارەکەت هەڵبژێرە</option>
-                {cities.map((city) => (
-                  <option key={city.id} value={city.id}>{city.name_ku}</option>
-                ))}
-              </select>
             </div>
 
             {error && <p className="text-sm text-red-500 font-medium">{error}</p>}
@@ -179,7 +148,7 @@ export default function RegisterPage() {
 
             <div className="text-center mt-4">
               <Link href="/login" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 text-sm font-medium">
-                پێشتر هەژمارت هەیە؟ چوونەژوورەوە
+                گەڕانەوە بۆ چوونەژوورەوە
               </Link>
             </div>
           </form>
@@ -189,7 +158,7 @@ export default function RegisterPage() {
           <form onSubmit={handleOtpSubmit} className="space-y-6">
             <div className="text-center mb-4">
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                کۆدێکی ٦ ژمارەییمان نارد بۆ <span dir="ltr" className="font-bold">{formData.phone}</span>
+                کۆدێکی ٦ ژمارەییمان نارد بۆ <span dir="ltr" className="font-bold">{phone}</span>
               </p>
             </div>
 
@@ -215,22 +184,13 @@ export default function RegisterPage() {
             >
               {loading ? "چاوەڕێبە..." : "پشتڕاستکردنەوە"}
             </button>
-
-            <button 
-              type="button"
-              onClick={() => setStep(1)}
-              className="w-full text-gray-500 hover:text-gray-700 text-sm mt-4 font-medium"
-            >
-              گۆڕینی ژمارە
-            </button>
           </form>
         )}
 
         {step === 3 && (
           <form onSubmit={handlePasswordSubmit} className="space-y-4">
             <div className="text-center mb-4">
-              <p className="text-green-600 font-bold mb-1">ژمارەکەت بە سەرکەوتوویی پشتڕاستکرایەوە! ✅</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">تکایە وشەیەکی نهێنی بۆ هەژمارەکەت دابنێ</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">تکایە وشەیەکی نهێنی نوێ دابنێ</p>
             </div>
 
             <div>
@@ -264,7 +224,7 @@ export default function RegisterPage() {
               disabled={loading}
               className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-xl mt-4 transition-colors disabled:opacity-50"
             >
-              {loading ? "چاوەڕێبە..." : "تەواوکردنی دروستکردن"}
+              {loading ? "چاوەڕێبە..." : "گۆڕینی وشەی نهێنی"}
             </button>
           </form>
         )}

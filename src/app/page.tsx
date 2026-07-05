@@ -11,32 +11,31 @@ export default function HomePage() {
 
   useEffect(() => {
     async function checkUser() {
-      if (typeof window !== "undefined" && (window as any).Telegram?.WebApp) {
-        const tg = (window as any).Telegram.WebApp;
-        tg.ready();
-        tg.expand();
-        const user = tg.initDataUnsafe?.user;
-        
+      try {
+        const { getSessionUser } = await import("./auth-actions");
+        const user = await getSessionUser();
         if (user) {
-          setUsername(user.first_name);
-        }
-        
-        if (user?.id) {
-          // Check if admin
-          if (user.id === 1932967171) {
+          setUsername(user.name);
+          
+          // You can set the admin phone number here
+          if (user.phone === "+9647501234567") { // TODO: Change to real admin phone
             setIsAdmin(true);
           }
-          
-          // Check if has profile
-          try {
-            const profile = await getProfessionalByTelegramId(user.id);
-            if (profile) {
-              setHasProfile(true);
-            }
-          } catch (e) {
-            // Ignore if columns don't exist yet
+
+          // Check if has professional profile
+          const { supabase } = await import("@/lib/supabase");
+          const { data } = await supabase
+            .from("professionals")
+            .select("id")
+            .eq("user_id", user.id)
+            .single();
+
+          if (data) {
+            setHasProfile(true);
           }
         }
+      } catch (e) {
+        // Ignore
       }
     }
     checkUser();
@@ -73,18 +72,7 @@ export default function HomePage() {
           <span className="text-3xl bg-blue-500 p-2 rounded-xl">🔍</span>
         </Link>
 
-        {!hasProfile && (
-          <Link 
-            href="/register"
-            className="w-full bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 text-gray-800 dark:text-gray-200 font-medium py-4 px-6 rounded-2xl flex items-center justify-between shadow-sm active:scale-95 transition-transform"
-          >
-            <div className="flex flex-col text-right">
-              <span className="text-lg">خۆتۆمارکردن</span>
-              <span className="text-xs text-gray-400 dark:text-gray-500 mt-1">وەک پسپۆڕ لە بوارێکدا خۆت تۆمار بکە</span>
-            </div>
-            <span className="text-2xl bg-gray-50 dark:bg-gray-700 p-2 rounded-xl">💼</span>
-          </Link>
-        )}
+        {/* removed register button */}
 
         <Link 
           href="/contact"
