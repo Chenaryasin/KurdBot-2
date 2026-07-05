@@ -51,8 +51,15 @@ export default function RegisterPage() {
       setupRecaptcha();
       const appVerifier = (window as any).recaptchaVerifier;
       
-      // Formatting phone for Firebase (needs country code if not present, assuming +964 for Iraq)
-      let phoneNumber = formData.phone;
+      const arabicNumbers = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+      const persianNumbers = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+      
+      let phoneNumber = formData.phone.trim().replace(/\s+/g, '');
+      for (let i = 0; i < 10; i++) {
+        phoneNumber = phoneNumber.split(arabicNumbers[i]).join(i.toString())
+                               .split(persianNumbers[i]).join(i.toString());
+      }
+
       if (phoneNumber.startsWith("0")) {
         phoneNumber = "+964" + phoneNumber.substring(1);
       } else if (!phoneNumber.startsWith("+")) {
@@ -64,7 +71,7 @@ export default function RegisterPage() {
       setStep(2);
     } catch (err: any) {
       console.error(err);
-      setError("کێشەیەک لە ناردنی کۆدەکە ڕوویدا، دڵنیابە لە دروستی ژمارەکەت.");
+      setError(`کێشە: ${err.message || 'نەتوانرا کۆد بنێردرێت'}`);
     }
 
     setLoading(false);
@@ -80,9 +87,9 @@ export default function RegisterPage() {
       await confirmationResult.confirm(otp);
       // OTP Verified successfully!
       setStep(3);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setError("کۆدەکە هەڵەیە یان بەسەرچووە.");
+      setError(`کۆدەکە هەڵەیە: ${err.message || 'بەسەرچووە'}`);
     }
     setLoading(false);
   };
