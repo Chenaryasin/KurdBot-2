@@ -253,7 +253,6 @@ export default function AdminPage() {
               </div>
             )}
           </div>
-          </div>
         </div>
       ) : activeTab === "users" ? (
         // USERS TAB
