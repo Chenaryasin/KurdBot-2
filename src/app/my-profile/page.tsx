@@ -20,7 +20,13 @@ export default function MyProfilePage() {
         const sessionUser = await getSessionUser();
         
         if (sessionUser) {
-          setUser(sessionUser);
+          const { data: dbUser } = await supabase
+            .from("users")
+            .select("*")
+            .eq("id", sessionUser.id)
+            .single();
+            
+          setUser(dbUser || sessionUser);
           
           const { data } = await supabase
             .from("professionals")
@@ -69,12 +75,20 @@ export default function MyProfilePage() {
             🔙
           </Link>
         </div>
-        <div className="flex flex-col items-center mt-6">
-          <div className="w-24 h-24 bg-blue-100 dark:bg-blue-900/30 rounded-[2rem] flex items-center justify-center shadow-sm border border-blue-200 dark:border-blue-800 text-4xl mb-4 text-blue-500">
-            👤
+        <div className="flex flex-col items-center mb-8 relative mt-6">
+          <div className="w-24 h-24 bg-blue-100 dark:bg-blue-900/30 rounded-[2rem] flex items-center justify-center shadow-inner border-4 border-white dark:border-gray-800 relative">
+            <span className="text-4xl">👤</span>
+            {user.photo_url && (
+              <img src={user.photo_url} alt="Profile" className="absolute inset-0 w-full h-full object-cover rounded-[2rem]" />
+            )}
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1">{user.name}</h1>
-          <p className="text-gray-500 dark:text-gray-400 font-medium" dir="ltr">{user.phone}</p>
+          <div className="flex items-center gap-2 mt-4">
+            <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">{user.name}</h1>
+            <Link href="/my-profile/edit" className="text-gray-400 hover:text-blue-500 transition-colors p-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
+            </Link>
+          </div>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1" dir="ltr">{user.phone}</p>
         </div>
       </div>
 

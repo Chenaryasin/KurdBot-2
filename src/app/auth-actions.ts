@@ -36,7 +36,11 @@ export async function loginWithTelegram(telegramId: number) {
 
   if (!user || error) {
     // User does not exist, they need to register
-    return { success: true, registered: false };
+    return { success: true, registered: false, isBlocked: false };
+  }
+
+  if (user.is_blocked) {
+    return { success: false, registered: true, isBlocked: true };
   }
 
   // User exists, log them in

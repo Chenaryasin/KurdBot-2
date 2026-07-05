@@ -19,6 +19,18 @@ export default function TelegramAuthWrapper({ children }: { children: React.Reac
         if (user && user.id) {
           const res = await loginWithTelegram(user.id);
           
+          if (res.isBlocked) {
+             setChecking(false);
+             document.body.innerHTML = `
+               <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;background-color:#fef2f2;color:#991b1b;font-family:sans-serif;padding:20px;text-align:center;">
+                 <span style="font-size:48px;margin-bottom:16px;">⛔</span>
+                 <h1 style="font-size:24px;font-weight:bold;margin-bottom:8px;">هەژمارەکەت ڕاگیراوە</h1>
+                 <p style="font-size:16px;color:#7f1d1d;">بەهۆی سەرپێچیکردن لە ڕێنماییەکان، هەژمارەکەت لەلایەن ئەدمینەوە ڕاگیراوە.</p>
+               </div>
+             `;
+             return;
+          }
+
           if (!res.registered) {
              // Not registered, redirect to register
              if (pathname !== '/register') {

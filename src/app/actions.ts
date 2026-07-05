@@ -289,3 +289,70 @@ export async function getAdminAnnouncements() {
   if (error) console.error("Error fetching admin announcements:", error);
   return data || [];
 }
+
+// User Administration
+export async function getAdminUsers(searchQuery: string = "") {
+  let query = supabase
+    .from("users")
+    .select(`
+      id,
+      name,
+      phone,
+      photo_url,
+      is_blocked,
+      created_at,
+      cities ( name_ku )
+    `)
+    .eq("is_blocked", false)
+    .order("created_at", { ascending: false });
+
+  if (searchQuery.trim()) {
+    query = query.or(`name.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`);
+  }
+
+  const { data, error } = await query;
+  if (error) console.error("Error fetching users:", error);
+  return data || [];
+}
+
+export async function getBlockedUsers(searchQuery: string = "") {
+  let query = supabase
+    .from("users")
+    .select(`
+      id,
+      name,
+      phone,
+      photo_url,
+      is_blocked,
+      created_at,
+      cities ( name_ku )
+    `)
+    .eq("is_blocked", true)
+    .order("created_at", { ascending: false });
+
+  if (searchQuery.trim()) {
+    query = query.or(`name.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`);
+  }
+
+  const { data, error } = await query;
+  if (error) console.error("Error fetching blocked users:", error);
+  return data || [];
+}
+
+export async function toggleBlockUser(id: string, isBlocked: boolean) {
+  const { error } = await supabase
+    .from("users")
+    .update({ is_blocked: isBlocked })
+    .eq("id", id);
+  if (error) throw new Error(error.message);
+  return true;
+}
+
+export async function deleteUser(id: string) {
+  const { error } = await supabase
+    .from("users")
+    .delete()
+    .eq("id", id);
+  if (error) throw new Error(error.message);
+  return true;
+}

@@ -14,13 +14,15 @@ import Link from "next/link";
 import { Send, Clock } from "lucide-react";
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<"approved" | "pending" | "messages" | "announcements">("pending");
+  const [activeTab, setActiveTab] = useState<"approved" | "pending" | "messages" | "announcements" | "users" | "blocked">("pending");
   const [searchQuery, setSearchQuery] = useState("");
   
   const [pending, setPending] = useState<any[]>([]);
   const [approved, setApproved] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
   const [announcements, setAnnouncements] = useState<any[]>([]);
+  const [usersList, setUsersList] = useState<any[]>([]);
+  const [blockedList, setBlockedList] = useState<any[]>([]);
   
   const [loading, setLoading] = useState(true);
   const [announcementTitle, setAnnouncementTitle] = useState("");
@@ -31,13 +33,13 @@ export default function AdminPage() {
   useEffect(() => {
     if (typeof window !== "undefined") {
       const savedTab = sessionStorage.getItem("adminActiveTab") as any;
-      if (savedTab === "approved" || savedTab === "pending" || savedTab === "messages" || savedTab === "announcements") {
+      if (["approved", "pending", "messages", "announcements", "users", "blocked"].includes(savedTab)) {
         setActiveTab(savedTab);
       }
     }
   }, []);
 
-  const changeTab = (tab: "approved" | "pending" | "messages" | "announcements") => {
+  const changeTab = (tab: "approved" | "pending" | "messages" | "announcements" | "users" | "blocked") => {
     setActiveTab(tab);
     setSearchQuery("");
     if (typeof window !== "undefined") {
@@ -59,6 +61,14 @@ export default function AdminPage() {
     } else if (activeTab === "announcements") {
       const data = await getAdminAnnouncements();
       setAnnouncements(data);
+    } else if (activeTab === "users") {
+      const { getAdminUsers } = await import("../actions");
+      const data = await getAdminUsers(searchQuery);
+      setUsersList(data);
+    } else if (activeTab === "blocked") {
+      const { getBlockedUsers } = await import("../actions");
+      const data = await getBlockedUsers(searchQuery);
+      setBlockedList(data);
     }
     setLoading(false);
   }
@@ -109,6 +119,18 @@ export default function AdminPage() {
     }
   };
 
+  const handleDeleteUser = async (id: string) => {
+    if (confirm("دڵنیایت لە سڕینەوەی ئەم بەکارهێنەرە بە یەکجاری؟ هەموو زانیارییەکانی دەسڕێتەوە!")) {
+      try {
+        const { deleteUser } = await import("../actions");
+        await deleteUser(id);
+        loadData();
+      } catch (error) {
+        alert("کێشەیەک ڕوویدا لە سڕینەوەی بەکارهێنەرەکە.");
+      }
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900 p-4 pb-28">
       {/* Header */}
@@ -120,35 +142,47 @@ export default function AdminPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex bg-white dark:bg-gray-800 rounded-xl p-1 mb-4 shadow-sm border border-gray-100 dark:border-gray-700 flex-wrap">
+      <div className="grid grid-cols-3 gap-2 bg-white dark:bg-gray-800 rounded-xl p-2 mb-4 shadow-sm border border-gray-100 dark:border-gray-700">
         <button 
           onClick={() => changeTab("approved")}
-          className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${activeTab === "approved" ? "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300" : "text-gray-500 dark:text-gray-400"}`}
+          className={`py-2 text-xs md:text-sm font-bold rounded-lg transition-colors ${activeTab === "approved" ? "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300" : "text-gray-500 dark:text-gray-400"}`}
         >
-          بەشداربوان
+          وەستاکان
         </button>
         <button 
           onClick={() => changeTab("pending")}
-          className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${activeTab === "pending" ? "bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300" : "text-gray-500 dark:text-gray-400"}`}
+          className={`py-2 text-xs md:text-sm font-bold rounded-lg transition-colors ${activeTab === "pending" ? "bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300" : "text-gray-500 dark:text-gray-400"}`}
         >
           چاوەڕوانی
         </button>
         <button 
+          onClick={() => changeTab("users")}
+          className={`py-2 text-xs md:text-sm font-bold rounded-lg transition-colors ${activeTab === "users" ? "bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300" : "text-gray-500 dark:text-gray-400"}`}
+        >
+          بەکارهێنەران
+        </button>
+        <button 
           onClick={() => changeTab("messages")}
-          className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${activeTab === "messages" ? "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300" : "text-gray-500 dark:text-gray-400"}`}
+          className={`py-2 text-xs md:text-sm font-bold rounded-lg transition-colors ${activeTab === "messages" ? "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300" : "text-gray-500 dark:text-gray-400"}`}
         >
           کۆنتێر
         </button>
         <button 
           onClick={() => changeTab("announcements")}
-          className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${activeTab === "announcements" ? "bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300" : "text-gray-500 dark:text-gray-400"}`}
+          className={`py-2 text-xs md:text-sm font-bold rounded-lg transition-colors ${activeTab === "announcements" ? "bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300" : "text-gray-500 dark:text-gray-400"}`}
         >
-          بڵاوکراوەکان
+          بڵاوکراوە
+        </button>
+        <button 
+          onClick={() => changeTab("blocked")}
+          className={`py-2 text-xs md:text-sm font-bold rounded-lg transition-colors ${activeTab === "blocked" ? "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300" : "text-gray-500 dark:text-gray-400"}`}
+        >
+          بلۆککراوەکان
         </button>
       </div>
 
-      {/* Search Bar (Only for Approved and Pending) */}
-      {(activeTab === "approved" || activeTab === "pending") && (
+      {/* Search Bar */}
+      {(activeTab === "approved" || activeTab === "pending" || activeTab === "users" || activeTab === "blocked") && (
         <div className="mb-4">
           <input 
             type="text"
@@ -219,6 +253,111 @@ export default function AdminPage() {
               </div>
             )}
           </div>
+          </div>
+        </div>
+      ) : activeTab === "users" ? (
+        // USERS TAB
+        <div className="flex flex-col gap-3">
+          {loading ? (
+            <p className="text-center text-gray-500 py-10">لە بارکردندایە...</p>
+          ) : usersList.length === 0 ? (
+            <p className="text-center text-gray-500 py-10">هیچ بەکارهێنەرێک نەدۆزرایەوە</p>
+          ) : (
+            usersList.map((user) => (
+              <div key={user.id} className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0">
+                    {user.photo_url ? (
+                      <img src={user.photo_url} alt={user.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-xl">👤</span>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-gray-800 dark:text-gray-100">{user.name}</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400" dir="ltr">{user.phone}</p>
+                    <p className="text-xs text-gray-400 mt-1">{user.cities?.name_ku || "نەزانراو"}</p>
+                  </div>
+                </div>
+                
+                <div className="flex gap-2">
+                  <Link 
+                    href={`/admin/users/${user.id}/edit`}
+                    className="flex-1 py-2 bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 rounded-lg text-sm font-medium transition-colors text-center"
+                  >
+                    دەستکاری
+                  </Link>
+                  <button 
+                    onClick={async () => {
+                      if(confirm("دڵنیایت لە ڕاگرتنی (بلۆککردن)ی ئەم بەکارهێنەرە؟")) {
+                        const { toggleBlockUser } = await import("../actions");
+                        await toggleBlockUser(user.id, true);
+                        loadData();
+                      }
+                    }}
+                    className="flex-1 py-2 bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400 rounded-lg text-sm font-medium transition-colors"
+                  >
+                    بلۆککردن
+                  </button>
+                  <button 
+                    onClick={() => handleDeleteUser(user.id)}
+                    className="flex-1 py-2 bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium transition-colors"
+                  >
+                    سڕینەوە
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      ) : activeTab === "blocked" ? (
+        // BLOCKED USERS TAB
+        <div className="flex flex-col gap-3">
+          {loading ? (
+            <p className="text-center text-gray-500 py-10">لە بارکردندایە...</p>
+          ) : blockedList.length === 0 ? (
+            <p className="text-center text-gray-500 py-10">هیچ بەکارهێنەرێکی بلۆککراو نییە</p>
+          ) : (
+            blockedList.map((user) => (
+              <div key={user.id} className="bg-red-50 dark:bg-red-900/10 rounded-xl p-4 shadow-sm border border-red-100 dark:border-red-900/30">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0 border border-red-200 dark:border-red-800">
+                    {user.photo_url ? (
+                      <img src={user.photo_url} alt={user.name} className="w-full h-full object-cover opacity-70" />
+                    ) : (
+                      <span className="text-xl">⛔</span>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-red-800 dark:text-red-300">{user.name}</h3>
+                    <p className="text-sm text-red-600 dark:text-red-400" dir="ltr">{user.phone}</p>
+                    <p className="text-xs text-red-500 mt-1">{user.cities?.name_ku || "نەزانراو"}</p>
+                  </div>
+                </div>
+                
+                <div className="flex gap-2">
+                  <button 
+                    onClick={async () => {
+                      if(confirm("دڵنیایت لە لابردنی بلۆکی ئەم بەکارهێنەرە؟")) {
+                        const { toggleBlockUser } = await import("../actions");
+                        await toggleBlockUser(user.id, false);
+                        loadData();
+                      }
+                    }}
+                    className="flex-1 py-2 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded-lg text-sm font-bold transition-colors shadow-sm"
+                  >
+                    لابردنی بلۆک
+                  </button>
+                  <button 
+                    onClick={() => handleDeleteUser(user.id)}
+                    className="flex-1 py-2 bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-400 rounded-lg text-sm font-medium transition-colors"
+                  >
+                    سڕینەوە
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       ) : activeTab === "messages" ? (
         // MESSAGES TAB
