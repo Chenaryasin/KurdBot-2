@@ -29,6 +29,9 @@ export default function EditProfilePage() {
   const [loading, setLoading] = useState(true);
   const [authorized, setAuthorized] = useState(false);
   
+  const [pendingAddImages, setPendingAddImages] = useState<string[]>([]);
+  const [pendingDeleteImages, setPendingDeleteImages] = useState<number[]>([]);
+
   const [cities, setCities] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   
@@ -157,6 +160,20 @@ export default function EditProfilePage() {
     if (!profile) return;
     setSaving(true);
     
+    // Process pending additions
+    for (const url of pendingAddImages) {
+      await addPortfolioImage(profile.id, url);
+    }
+    
+    // Process pending deletions
+    for (const id of pendingDeleteImages) {
+      await deletePortfolioImage(id);
+    }
+    
+    // Clear pending states
+    setPendingAddImages([]);
+    setPendingDeleteImages([]);
+    
     const updateData: any = {
       name: formData.name,
       phone: formData.phone,
@@ -172,6 +189,9 @@ export default function EditProfilePage() {
 
     const res = await updateProfessionalProfile(profile.id, updateData);
     if (res.success) {
+      // Reload profile to ensure we have the absolute latest IDs for new images
+      const latestProfile = await getProfessionalById(profile.id);
+      setProfile(latestProfile);
       alert("زانیارییەکان بە سەرکەوتوویی نوێکرانەوە!");
     } else {
       alert("کێشەیەک ڕوویدا لە نوێکردنەوە.");
@@ -205,14 +225,14 @@ export default function EditProfilePage() {
 
       const imageUrl = publicUrlData.publicUrl;
       
-      const res = await addPortfolioImage(profile.id, imageUrl);
+      // Instead of adding immediately, add to pending list
+      setPendingAddImages(prev => [...prev, imageUrl]);
       
-      if (res.success && res.image) {
-        setProfile((prev: any) => ({
-          ...prev,
-          portfolio_images: [res.image, ...(prev.portfolio_images || [])]
-        }));
-      }
+      // Optimistically update UI
+      setProfile((prev: any) => ({
+        ...prev,
+        portfolio_images: [{ id: `pending-${Math.random()}`, image_url: imageUrl, isPending: true }, ...(prev.portfolio_images || [])]
+      }));
       
     } catch (error: any) {
       alert("کێشە لە ئەپلۆدکردندا: " + error.message);
@@ -224,23 +244,22 @@ export default function EditProfilePage() {
   const handleDeletePortfolioImage = async (imageId: number | string) => {
     if (!confirm("دڵنیایت لە سڕینەوەی ئەم وێنەیە؟")) return;
     
-    setUploading(true);
-    try {
-      const res = await deletePortfolioImage(imageId);
-      if (res.success) {
-        // Optimistically update the UI
-        setProfile((prev: any) => ({
-          ...prev,
-          portfolio_images: prev.portfolio_images.filter((img: any) => img.id !== imageId)
-        }));
-      } else {
-        alert("کێشەیەک ڕوویدا لە سڕینەوەی وێنەکە.");
+    // If it's a pending image, just remove it from pending Add list
+    if (String(imageId).startsWith('pending-')) {
+      const imgObj = profile.portfolio_images.find((img: any) => img.id === imageId);
+      if (imgObj) {
+        setPendingAddImages(prev => prev.filter(url => url !== imgObj.image_url));
       }
-    } catch (error: any) {
-      alert("کێشەیەک ڕوویدا: " + error.message);
-    } finally {
-      setUploading(false);
+    } else {
+      // Mark for deletion on save
+      setPendingDeleteImages((prev: any) => [...prev, imageId]);
     }
+    
+    // Optimistically update UI
+    setProfile((prev: any) => ({
+      ...prev,
+      portfolio_images: prev.portfolio_images.filter((img: any) => img.id !== imageId)
+    }));
   };
 
   if (loading) {

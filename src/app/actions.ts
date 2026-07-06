@@ -44,7 +44,10 @@ export async function getProfessionals(cityId?: string, categoryId?: string, sea
   return data || [];
 }
 
+import { unstable_noStore as noStore } from "next/cache";
+
 export async function getProfessionalById(id: string) {
+  noStore();
   const { data, error } = await supabase
     .from("professionals")
     .select(`
@@ -128,6 +131,7 @@ export async function updateProfessionalProfile(id: string, formData: {
     console.error("Error updating profile:", error);
     return { success: false, error: error.message };
   }
+  revalidatePath("/", "layout");
   return { success: true };
 }
 
