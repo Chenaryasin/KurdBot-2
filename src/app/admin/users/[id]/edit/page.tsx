@@ -243,7 +243,7 @@ export default function AdminEditUserPage({ params }: { params: { id: string } }
 
       {/* Cropper Modal */}
       {imageSrc && (
-        <div className="fixed inset-0 z-50 flex flex-col bg-black">
+        <div className="fixed inset-0 z-[100] flex flex-col bg-black">
           <div className="flex-1 relative">
             <Cropper
               image={imageSrc}
