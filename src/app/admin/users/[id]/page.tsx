@@ -39,7 +39,7 @@ export default function AdminUserProfilePage() {
     <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900 pb-20">
       {/* Cover & Header */}
       <div className="bg-gradient-to-br from-indigo-600 to-indigo-800 pt-8 pb-16 px-4 rounded-b-[40px] relative">
-        <button onClick={() => router.push('/admin')} className="absolute top-6 left-4 w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-xl text-white active:scale-95 transition-transform">
+        <button onClick={() => router.back()} className="absolute top-6 left-4 w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-xl text-white active:scale-95 transition-transform">
           🔙
         </button>
         <Link href={`/admin/users/${id}/edit`} className="absolute top-6 right-4 w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-xl text-white active:scale-95 transition-transform">

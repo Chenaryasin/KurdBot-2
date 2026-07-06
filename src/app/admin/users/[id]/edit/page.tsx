@@ -130,7 +130,8 @@ export default function AdminEditUserPage() {
 
       if (error) throw error;
       
-      router.push("/admin");
+      router.back();
+      router.refresh();
     } catch (error) {
       console.error(error);
       alert("کێشەیەک ڕوویدا لە سەیڤکردنی زانیارییەکان");
@@ -146,9 +147,9 @@ export default function AdminEditUserPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 pb-28">
       <div className="flex items-center gap-3 mb-6 mt-2">
-        <Link href="/admin" className="w-10 h-10 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center shadow-sm text-xl border border-gray-100 dark:border-gray-700 flex-shrink-0 active:scale-95 transition-transform">
+        <button type="button" onClick={() => router.back()} className="w-10 h-10 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center shadow-sm text-xl border border-gray-100 dark:border-gray-700 flex-shrink-0 active:scale-95 transition-transform">
           🔙
-        </Link>
+        </button>
         <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">دەستکاریکردنی بەکارهێنەر</h1>
       </div>
 
