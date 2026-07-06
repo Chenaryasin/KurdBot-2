@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getProfessionalById } from "../../../actions";
+import { getUserById } from "../../../actions";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 
@@ -14,7 +14,7 @@ export default function AdminUserProfilePage() {
   useEffect(() => {
     async function loadProfile() {
       if (id) {
-        const data = await getProfessionalById(id as string);
+        const data = await getUserById(id as string);
         setProfile(data);
       }
       setLoading(false);

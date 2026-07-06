@@ -64,15 +64,43 @@ export async function getProfessionalById(id: string) {
     console.error("Error fetching professional details:", error);
     return null;
   }
-  
-  // Fetch portfolio images
-  const { data: images } = await supabase
-    .from("portfolio_images")
-    .select("id, image_url")
-    .eq("professional_id", id)
-    .order("created_at", { ascending: false });
 
-  return { ...data, portfolio_images: images || [] };
+  if (data) {
+    try {
+      const { data: images } = await supabase
+        .from("portfolio_images")
+        .select("id, image_url")
+        .eq("professional_id", id)
+        .order("created_at", { ascending: false });
+
+      return { ...data, portfolio_images: images || [], is_professional: true };
+    } catch (e) {
+      console.error(e);
+      return { ...data, portfolio_images: [], is_professional: true };
+    }
+  }
+
+  return null;
+}
+
+export async function getUserById(id: string) {
+  noStore();
+  const { data, error } = await supabase
+    .from("users")
+    .select(`
+      id, name, phone, photo_url, created_at, telegram_id,
+      city_id,
+      cities ( name_ku )
+    `)
+    .eq("id", id)
+    .single();
+
+  if (error) {
+    console.error("Error fetching user details:", error);
+    return null;
+  }
+
+  return { ...data, is_professional: false };
 }
 
 export async function getProfessionalByTelegramId(telegramId: number) {
