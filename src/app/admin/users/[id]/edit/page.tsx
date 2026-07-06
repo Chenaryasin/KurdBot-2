@@ -1,17 +1,21 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { Camera } from "lucide-react";
 import Cropper from 'react-easy-crop';
+import { getSessionUser } from "../../../../auth-actions";
+import { getUserById } from "../../../../actions";
 
-export default function AdminEditUserPage({ params }: { params: { id: string } }) {
+export default function AdminEditUserPage() {
   const router = useRouter();
+  const params = useParams();
+  const userId = params?.id as string;
+  
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const userId = params.id;
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -25,7 +29,6 @@ export default function AdminEditUserPage({ params }: { params: { id: string } }
   useEffect(() => {
     async function loadData() {
       try {
-        const { getSessionUser } = await import("../../../../auth-actions");
         const sessionUser = await getSessionUser();
         // Simple admin check
         if (!sessionUser || (sessionUser.phone !== "07502458972" && sessionUser.phone !== "+9647502458972")) {
@@ -33,7 +36,8 @@ export default function AdminEditUserPage({ params }: { params: { id: string } }
           return;
         }
 
-        const { getUserById } = await import("../../../../actions");
+        if (!userId) return;
+
         const userData = await getUserById(userId);
 
         if (userData) {

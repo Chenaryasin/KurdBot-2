@@ -96,10 +96,11 @@ export async function getUserById(id: string) {
     .single();
 
   if (error) {
-    console.error("Error fetching user details:", error);
+    console.error("Error fetching user details:", error, "ID:", id);
     return null;
   }
 
+  console.log("getUserById fetched:", data, "for ID:", id);
   return { ...data, is_professional: false };
 }
 

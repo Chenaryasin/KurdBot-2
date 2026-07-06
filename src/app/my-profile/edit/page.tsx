@@ -6,6 +6,8 @@ import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { Camera } from "lucide-react";
 import Cropper from 'react-easy-crop';
+import { getSessionUser } from "../../auth-actions";
+import { getUserById } from "../../actions";
 
 export default function EditUserProfilePage() {
   const router = useRouter();
@@ -25,7 +27,6 @@ export default function EditUserProfilePage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const { getSessionUser } = await import("../../auth-actions");
         const sessionUser = await getSessionUser();
         if (!sessionUser) {
           router.replace("/");
@@ -34,7 +35,6 @@ export default function EditUserProfilePage() {
 
         setUserId(sessionUser.id.toString());
 
-        const { getUserById } = await import("../../actions");
         const userData = await getUserById(sessionUser.id.toString());
 
         if (userData) {
