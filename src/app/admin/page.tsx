@@ -147,7 +147,7 @@ export default function AdminPage() {
           onClick={() => changeTab("approved")}
           className={`py-2 text-xs md:text-sm font-bold rounded-lg transition-colors ${activeTab === "approved" ? "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300" : "text-gray-500 dark:text-gray-400"}`}
         >
-          وەستاکان
+          بەشداربوان
         </button>
         <button 
           onClick={() => changeTab("pending")}

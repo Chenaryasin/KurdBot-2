@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { Camera } from "lucide-react";
+import Cropper from 'react-easy-crop';
 
 export default function AdminEditUserPage({ params }: { params: { id: string } }) {
   const router = useRouter();
@@ -26,8 +27,8 @@ export default function AdminEditUserPage({ params }: { params: { id: string } }
       try {
         const { getSessionUser } = await import("../../../../auth-actions");
         const sessionUser = await getSessionUser();
-        // Simple admin check: phone is 07701112233
-        if (!sessionUser || sessionUser.phone !== "07701112233") {
+        // Simple admin check
+        if (!sessionUser || (sessionUser.phone !== "07502458972" && sessionUser.phone !== "+9647502458972")) {
           router.replace("/");
           return;
         }
@@ -57,25 +58,42 @@ export default function AdminEditUserPage({ params }: { params: { id: string } }
     loadData();
   }, [router, userId]);
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !userId) return;
+  const [imageSrc, setImageSrc] = useState<string | null>(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
 
-    if (file.size > 5 * 1024 * 1024) {
-      alert("قەبارەی وێنەکە نابێت لە ٥ مێگابایت زیاتر بێت");
-      return;
+  const onCropComplete = useCallback((croppedArea: any, croppedAreaPixels: any) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  }, []);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      if (file.size > 5 * 1024 * 1024) {
+        alert("قەبارەی وێنەکە نابێت لە ٥ مێگابایت زیاتر بێت");
+        return;
+      }
+      const reader = new FileReader();
+      reader.addEventListener('load', () => setImageSrc(reader.result?.toString() || null));
+      reader.readAsDataURL(file);
     }
+  };
+
+  const handleCropSave = async () => {
+    if (!imageSrc || !croppedAreaPixels || !userId) return;
 
     try {
       setUploadingImage(true);
-      
-      const fileExt = file.name.split('.').pop();
+      const { getCroppedImg } = await import('@/lib/cropImage');
+      const croppedFile = await getCroppedImg(imageSrc, croppedAreaPixels);
+
+      const fileExt = "jpg";
       const fileName = `user_${userId}_${Math.random()}.${fileExt}`;
       const filePath = `user_profiles/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from("profiles")
-        .upload(filePath, file);
+        .upload(filePath, croppedFile);
 
       if (uploadError) throw uploadError;
 
@@ -84,6 +102,7 @@ export default function AdminEditUserPage({ params }: { params: { id: string } }
         .getPublicUrl(filePath);
 
       setPhotoUrl(data.publicUrl);
+      setImageSrc(null); // close cropper
     } catch (error) {
       console.error("Error uploading image:", error);
       alert("کێشەیەک ڕوویدا لە بارکردنی وێنەکە");
@@ -221,6 +240,37 @@ export default function AdminEditUserPage({ params }: { params: { id: string } }
           )}
         </button>
       </form>
+
+      {/* Cropper Modal */}
+      {imageSrc && (
+        <div className="fixed inset-0 z-50 flex flex-col bg-black">
+          <div className="flex-1 relative">
+            <Cropper
+              image={imageSrc}
+              crop={crop}
+              zoom={1}
+              aspect={1}
+              cropShape="round"
+              onCropChange={setCrop}
+              onCropComplete={onCropComplete}
+            />
+          </div>
+          <div className="p-4 bg-gray-900 flex gap-4 pb-8">
+            <button
+              onClick={() => setImageSrc(null)}
+              className="flex-1 bg-gray-700 text-white py-3 rounded-xl font-bold"
+            >
+              پاشگەزبوونەوە
+            </button>
+            <button
+              onClick={handleCropSave}
+              className="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold"
+            >
+              بڕین و دانان
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
