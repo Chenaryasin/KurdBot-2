@@ -221,7 +221,7 @@ export default function EditProfilePage() {
     }
   };
 
-  const handleDeletePortfolioImage = async (imageId: number) => {
+  const handleDeletePortfolioImage = async (imageId: number | string) => {
     if (!confirm("دڵنیایت لە سڕینەوەی ئەم وێنەیە؟")) return;
     
     setUploading(true);

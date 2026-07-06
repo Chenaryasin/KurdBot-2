@@ -145,21 +145,15 @@ export async function addPortfolioImage(professional_id: string, image_url: stri
   return { success: true, image: data?.[0] };
 }
 
-export async function deletePortfolioImage(imageId: number) {
-  const { data, error } = await supabase
+export async function deletePortfolioImage(imageId: number | string) {
+  const { error } = await supabase
     .from("portfolio_images")
     .delete()
-    .eq("id", imageId)
-    .select();
+    .eq("id", imageId);
 
   if (error) {
     console.error("Error deleting portfolio image:", error);
     return { success: false, error: error.message };
-  }
-  
-  if (!data || data.length === 0) {
-    console.error("No image found to delete for ID:", imageId);
-    return { success: false, error: "وێنەکە نەدۆزرایەوە یان پێشتر سڕاوەتەوە" };
   }
 
   revalidatePath("/", "layout");
