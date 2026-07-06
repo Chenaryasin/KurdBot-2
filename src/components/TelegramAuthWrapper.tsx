@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { loginWithTelegram } from "@/app/auth-actions";
+import { loginWithTelegram, loginWithTelegramData } from "@/app/auth-actions";
 import { useRouter, usePathname } from "next/navigation";
 
 export default function TelegramAuthWrapper({ children }: { children: React.ReactNode }) {
@@ -14,11 +14,20 @@ export default function TelegramAuthWrapper({ children }: { children: React.Reac
       if (typeof window !== "undefined" && (window as any).Telegram?.WebApp) {
         const tg = (window as any).Telegram.WebApp;
         tg.ready();
-        const user = tg.initDataUnsafe?.user;
         
-        if (user && user.id) {
-          const res = await loginWithTelegram(user.id);
-          
+        let res: any = null;
+        
+        // 1. Try secure Telegram Data validation
+        if (tg.initData) {
+          res = await loginWithTelegramData(tg.initData);
+        } 
+        // 2. Fallback to unsafe validation for local development only
+        else if (process.env.NODE_ENV === "development" && tg.initDataUnsafe?.user) {
+          console.warn("Using unsafe login for local development");
+          res = await loginWithTelegram(tg.initDataUnsafe.user.id);
+        }
+
+        if (res && res.success !== false) {
           if (res.isBlocked) {
              setChecking(false);
              document.body.innerHTML = `
@@ -32,12 +41,10 @@ export default function TelegramAuthWrapper({ children }: { children: React.Reac
           }
 
           if (!res.registered) {
-             // Not registered, redirect to register
              if (pathname !== '/register') {
                router.replace("/register");
              }
           } else {
-             // Registered, prevent access to register page
              if (pathname === '/register') {
                router.replace("/");
              }

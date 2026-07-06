@@ -3,6 +3,7 @@
 import { supabase } from "@/lib/supabase";
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 
 const JWT_SECRET = process.env.JWT_SECRET || "kurdmaster_super_secret_key_123!";
 
@@ -24,6 +25,64 @@ function normalizeText(text: string) {
   }
   
   return result;
+}
+
+export async function loginWithTelegramData(initData: string) {
+  const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+  if (!BOT_TOKEN) {
+    console.error("TELEGRAM_BOT_TOKEN is missing!");
+    return { success: false, error: "Server configuration error" };
+  }
+
+  try {
+    const urlParams = new URLSearchParams(initData);
+    const hash = urlParams.get('hash');
+    if (!hash) return { success: false, error: "Invalid data" };
+    
+    urlParams.delete('hash');
+    
+    // Sort params alphabetically and join them
+    const params: string[] = [];
+    urlParams.forEach((value, key) => {
+      params.push(`${key}=${value}`);
+    });
+    params.sort();
+    
+    const dataCheckString = params.join('\n');
+    
+    const secretKey = crypto.createHmac('sha256', 'WebAppData')
+      .update(BOT_TOKEN)
+      .digest();
+      
+    const signature = crypto.createHmac('sha256', secretKey)
+      .update(dataCheckString)
+      .digest('hex');
+
+    if (signature !== hash) {
+      return { success: false, error: "Invalid signature" };
+    }
+
+    const userStr = urlParams.get('user');
+    if (!userStr) return { success: false, error: "No user data" };
+    
+    const user = JSON.parse(decodeURIComponent(userStr));
+    if (!user || !user.id) return { success: false, error: "Invalid user data" };
+    
+    // Optional: Check auth_date for expiration (e.g. 24 hours)
+    const authDate = urlParams.get('auth_date');
+    if (authDate) {
+      const now = Math.floor(Date.now() / 1000);
+      if (now - parseInt(authDate) > 86400) {
+        return { success: false, error: "Data expired" };
+      }
+    }
+
+    // Since signature is valid, we can trust user.id
+    return loginWithTelegram(user.id);
+  } catch (error) {
+    console.error("Error verifying telegram data:", error);
+    return { success: false, error: "Verification failed" };
+  }
 }
 
 export async function loginWithTelegram(telegramId: number) {
