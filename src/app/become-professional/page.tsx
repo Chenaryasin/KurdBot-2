@@ -157,9 +157,9 @@ export default function RegisterPage() {
     <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900 p-4 pb-28">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6 mt-2">
-        <Link href="/" className="w-10 h-10 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center shadow-sm text-xl border border-gray-100 dark:border-gray-700 active:scale-95 transition-transform">
+        <button type="button" onClick={() => router.back()} className="w-10 h-10 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center shadow-sm text-xl border border-gray-100 dark:border-gray-700 active:scale-95 transition-transform">
           🔙
-        </Link>
+        </button>
         <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">خۆتۆمارکردن</h1>
       </div>
 
