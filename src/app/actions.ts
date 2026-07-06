@@ -142,6 +142,19 @@ export async function addPortfolioImage(professional_id: string, image_url: stri
   return { success: true };
 }
 
+export async function deletePortfolioImage(imageId: number) {
+  const { error } = await supabase
+    .from("portfolio_images")
+    .delete()
+    .eq("id", imageId);
+
+  if (error) {
+    console.error("Error deleting portfolio image:", error);
+    return { success: false, error: error.message };
+  }
+  return { success: true };
+}
+
 export async function approveProfessional(id: string) {
   const { error } = await supabase
     .from("professionals")

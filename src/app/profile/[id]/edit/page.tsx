@@ -6,6 +6,7 @@ import {
   getProfessionalById, 
   updateProfessionalProfile, 
   addPortfolioImage,
+  deletePortfolioImage,
   getCities,
   getCategories 
 } from "../../../actions";
@@ -217,6 +218,26 @@ export default function EditProfilePage() {
     }
   };
 
+  const handleDeletePortfolioImage = async (imageId: number) => {
+    if (!confirm("دڵنیایت لە سڕینەوەی ئەم وێنەیە؟")) return;
+    
+    setUploading(true);
+    try {
+      const res = await deletePortfolioImage(imageId);
+      if (res.success) {
+        // Refresh profile
+        const updatedProfile = await getProfessionalById(profile.id);
+        setProfile(updatedProfile);
+      } else {
+        alert("کێشەیەک ڕوویدا لە سڕینەوەی وێنەکە.");
+      }
+    } catch (error: any) {
+      alert("کێشەیەک ڕوویدا: " + error.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center text-gray-500 bg-gray-50 dark:bg-gray-900">خەریکی هێنانە...</div>;
   }
@@ -233,7 +254,7 @@ export default function EditProfilePage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900 p-4 pb-28">
+    <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900 p-4 pb-32">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6 mt-2">
         <button onClick={() => router.back()} className="w-10 h-10 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center shadow-sm text-xl border border-gray-100 dark:border-gray-700 flex-shrink-0 active:scale-95 transition-transform">
@@ -321,7 +342,7 @@ export default function EditProfilePage() {
             onChange={(e) => setFormData({...formData, city_id: e.target.value})}
             className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value="" disabled>شارێک هەڵبژێرە</option>
+            <option value="" disabled>شارەکەت هەڵبژێرە</option>
             {cities.map((city) => (
               <option key={city.id} value={city.id}>{city.name_ku}</option>
             ))}
@@ -332,6 +353,7 @@ export default function EditProfilePage() {
           <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">چەند ساڵ ئەزموونت هەیە؟</label>
           <input 
             type="number" 
+            dir="ltr"
             min="0"
             value={formData.experience_years}
             onChange={(e) => setFormData({...formData, experience_years: e.target.value})}
@@ -339,44 +361,53 @@ export default function EditProfilePage() {
           />
         </div>
 
-        {/* Texts */}
+        {/* Extra Info */}
         <div>
-          <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">🎓 بڕوانامە</label>
-          <textarea 
-            rows={3}
-            placeholder="بۆ نمونە: دبلۆم لە تەکنەلۆژیا"
+          <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-2">
+            <span>🎓 بڕوانامە</span>
+            <span className="text-xs font-normal text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">ئارەزوومەندانە</span>
+          </label>
+          <input 
+            type="text" 
+            placeholder="نموونە: بەکالۆریۆس لە تەلارسازی"
             value={formData.degree}
             onChange={(e) => setFormData({...formData, degree: e.target.value})}
-            className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">🛠️ شارەزاییەکان</label>
+          <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-2">
+            <span>🛠️ شارەزاییەکانت</span>
+            <span className="text-xs font-normal text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">ئارەزوومەندانە</span>
+          </label>
           <textarea 
-            rows={3}
-            placeholder="شارەزاییت لە چییە؟ باسی بکە..."
+            placeholder="نموونە: بۆیاخکردن، دیکۆراتی ناوەوە..."
             value={formData.skills}
             onChange={(e) => setFormData({...formData, skills: e.target.value})}
-            className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            rows={3}
+            className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400 resize-none"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">🏢 شوێنەکانی کارکردن</label>
-          <textarea 
-            rows={3}
-            placeholder="بۆ نمونە: ناو بازاڕ، گەڕەکی بەختیاری..."
+          <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-2">
+            <span>📍 شوێنی کارکردنت</span>
+            <span className="text-xs font-normal text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">ئارەزوومەندانە</span>
+          </label>
+          <input 
+            type="text" 
+            placeholder="نموونە: سلێمانی، هەولێر"
             value={formData.work_locations}
             onChange={(e) => setFormData({...formData, work_locations: e.target.value})}
-            className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
           />
         </div>
 
         <button 
           onClick={handleSave}
           disabled={saving}
-          className={`w-full text-white font-bold py-4 rounded-xl mt-2 transition-all ${
+          className={`w-full py-4 mt-2 rounded-xl text-white font-bold text-lg transition-all ${
             saving ? "bg-gray-400 dark:bg-gray-600" : "bg-blue-600 dark:bg-blue-600 active:scale-95 shadow-md shadow-blue-200 dark:shadow-none"
           }`}
         >
@@ -392,8 +423,14 @@ export default function EditProfilePage() {
 
         <div className="grid grid-cols-3 gap-2 mt-2">
           {profile.portfolio_images?.map((img: any) => (
-            <div key={img.id} className="aspect-square rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700">
+            <div key={img.id} className="relative aspect-square rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 group">
               <img src={img.image_url} alt="Work" className="w-full h-full object-cover" />
+              <button 
+                onClick={() => handleDeletePortfolioImage(img.id)}
+                className="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-80 hover:opacity-100 transition-opacity"
+              >
+                ✕
+              </button>
             </div>
           ))}
           
