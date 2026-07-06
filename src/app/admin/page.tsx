@@ -264,7 +264,7 @@ export default function AdminPage() {
           ) : (
             usersList.map((user) => (
               <div key={user.id} className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
-                <Link href={`/admin/users/${user.id}/edit`} className="flex items-center gap-4 mb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 p-2 -mx-2 rounded-xl transition-colors">
+                <Link href={`/admin/users/${user.id}`} className="flex items-center gap-4 mb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 p-2 -mx-2 rounded-xl transition-colors">
                   <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0">
                     {user.photo_url ? (
                       <img src={user.photo_url} alt={user.name} className="w-full h-full object-cover" />
@@ -319,7 +319,7 @@ export default function AdminPage() {
           ) : (
             blockedList.map((user) => (
               <div key={user.id} className="bg-red-50 dark:bg-red-900/10 rounded-xl p-4 shadow-sm border border-red-100 dark:border-red-900/30">
-                <Link href={`/admin/users/${user.id}/edit`} className="flex items-center gap-4 mb-4 cursor-pointer hover:bg-red-100 dark:hover:bg-red-900/20 p-2 -mx-2 rounded-xl transition-colors">
+                <Link href={`/admin/users/${user.id}`} className="flex items-center gap-4 mb-4 cursor-pointer hover:bg-red-100 dark:hover:bg-red-900/20 p-2 -mx-2 rounded-xl transition-colors">
                   <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0 border border-red-200 dark:border-red-800">
                     {user.photo_url ? (
                       <img src={user.photo_url} alt={user.name} className="w-full h-full object-cover opacity-70" />
