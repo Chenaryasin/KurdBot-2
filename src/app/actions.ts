@@ -1,6 +1,7 @@
 "use server";
 
 import { supabase } from "@/lib/supabase";
+import { revalidatePath } from "next/cache";
 
 export async function getCities() {
   const { data, error } = await supabase.from("cities").select("*").order("name_ku");
@@ -131,27 +132,37 @@ export async function updateProfessionalProfile(id: string, formData: {
 }
 
 export async function addPortfolioImage(professional_id: string, image_url: string) {
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("portfolio_images")
-    .insert([{ professional_id, image_url }]);
+    .insert([{ professional_id, image_url }])
+    .select();
 
   if (error) {
     console.error("Error adding portfolio image:", error);
     return { success: false, error: error.message };
   }
-  return { success: true };
+  revalidatePath("/", "layout");
+  return { success: true, image: data?.[0] };
 }
 
 export async function deletePortfolioImage(imageId: number) {
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("portfolio_images")
     .delete()
-    .eq("id", imageId);
+    .eq("id", imageId)
+    .select();
 
   if (error) {
     console.error("Error deleting portfolio image:", error);
     return { success: false, error: error.message };
   }
+  
+  if (!data || data.length === 0) {
+    console.error("No image found to delete for ID:", imageId);
+    return { success: false, error: "وێنەکە نەدۆزرایەوە یان پێشتر سڕاوەتەوە" };
+  }
+
+  revalidatePath("/", "layout");
   return { success: true };
 }
 

@@ -205,11 +205,14 @@ export default function EditProfilePage() {
 
       const imageUrl = publicUrlData.publicUrl;
       
-      await addPortfolioImage(profile.id, imageUrl);
+      const res = await addPortfolioImage(profile.id, imageUrl);
       
-      // Refresh profile
-      const updatedProfile = await getProfessionalById(profile.id);
-      setProfile(updatedProfile);
+      if (res.success && res.image) {
+        setProfile((prev: any) => ({
+          ...prev,
+          portfolio_images: [res.image, ...(prev.portfolio_images || [])]
+        }));
+      }
       
     } catch (error: any) {
       alert("کێشە لە ئەپلۆدکردندا: " + error.message);
@@ -225,9 +228,11 @@ export default function EditProfilePage() {
     try {
       const res = await deletePortfolioImage(imageId);
       if (res.success) {
-        // Refresh profile
-        const updatedProfile = await getProfessionalById(profile.id);
-        setProfile(updatedProfile);
+        // Optimistically update the UI
+        setProfile((prev: any) => ({
+          ...prev,
+          portfolio_images: prev.portfolio_images.filter((img: any) => img.id !== imageId)
+        }));
       } else {
         alert("کێشەیەک ڕوویدا لە سڕینەوەی وێنەکە.");
       }
