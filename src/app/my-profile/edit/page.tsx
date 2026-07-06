@@ -11,7 +11,7 @@ export default function EditUserProfilePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [userId, setUserId] = useState<number | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -32,13 +32,10 @@ export default function EditUserProfilePage() {
           return;
         }
 
-        setUserId(sessionUser.id);
+        setUserId(sessionUser.id.toString());
 
-        const { data: userData } = await supabase
-          .from("users")
-          .select("*")
-          .eq("id", sessionUser.id)
-          .single();
+        const { getUserById } = await import("../../actions");
+        const userData = await getUserById(sessionUser.id.toString());
 
         if (userData) {
           setName(userData.name || "");

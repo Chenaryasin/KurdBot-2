@@ -33,11 +33,8 @@ export default function AdminEditUserPage({ params }: { params: { id: string } }
           return;
         }
 
-        const { data: userData } = await supabase
-          .from("users")
-          .select("*")
-          .eq("id", userId)
-          .single();
+        const { getUserById } = await import("../../../../actions");
+        const userData = await getUserById(userId);
 
         if (userData) {
           setName(userData.name || "");
