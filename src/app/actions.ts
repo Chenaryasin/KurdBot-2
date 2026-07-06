@@ -116,6 +116,7 @@ export async function updateProfessionalProfile(id: string, formData: {
   degree?: string;
   skills?: string;
   work_locations?: string;
+  photo_url?: string;
 }) {
   const { error } = await supabase
     .from("professionals")

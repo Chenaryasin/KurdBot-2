@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { 
   getProfessionalByTelegramId, 
   getProfessionalById, 
@@ -12,6 +12,8 @@ import {
 import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import { Camera } from "lucide-react";
+import Cropper from 'react-easy-crop';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -42,6 +44,62 @@ export default function EditProfilePage() {
   
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  
+  const [photoUrl, setPhotoUrl] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imageSrc, setImageSrc] = useState<string | null>(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+
+  const onCropComplete = useCallback((croppedArea: any, croppedAreaPixels: any) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  }, []);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      if (file.size > 5 * 1024 * 1024) {
+        alert("قەبارەی وێنەکە نابێت لە ٥ مێگابایت زیاتر بێت");
+        return;
+      }
+      const reader = new FileReader();
+      reader.addEventListener('load', () => setImageSrc(reader.result?.toString() || null));
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleCropSave = async () => {
+    if (!imageSrc || !croppedAreaPixels || !profile) return;
+
+    try {
+      setUploadingImage(true);
+      const { getCroppedImg } = await import('@/lib/cropImage');
+      const croppedFile = await getCroppedImg(imageSrc, croppedAreaPixels);
+
+      const fileExt = "jpg";
+      const fileName = `user_${profile.user_id}_${Math.random()}.${fileExt}`;
+      const filePath = `user_profiles/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("profiles")
+        .upload(filePath, croppedFile);
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage
+        .from("profiles")
+        .getPublicUrl(filePath);
+
+      setPhotoUrl(data.publicUrl);
+      setImageSrc(null); // close cropper
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      alert("کێشەیەک ڕوویدا لە بارکردنی وێنەکە");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   useEffect(() => {
     async function loadData() {
@@ -72,6 +130,7 @@ export default function EditProfilePage() {
               skills: fullProfile.skills || "",
               work_locations: fullProfile.work_locations || ""
             });
+            setPhotoUrl(fullProfile.photo_url || "");
             
             if (user?.id) {
               const tgId = user.id.toString();
@@ -102,7 +161,8 @@ export default function EditProfilePage() {
       phone: formData.phone,
       degree: formData.degree,
       skills: formData.skills,
-      work_locations: formData.work_locations
+      work_locations: formData.work_locations,
+      photo_url: photoUrl
     };
 
     if (formData.experience_years) updateData.experience_years = parseInt(formData.experience_years);
@@ -184,6 +244,40 @@ export default function EditProfilePage() {
 
       <div className="bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col gap-5">
         
+        {/* Profile Image Upload */}
+        <div className="flex flex-col items-center mb-2">
+          <div className="relative w-28 h-28">
+            <div className="w-full h-full bg-blue-50 dark:bg-blue-900/30 rounded-[2rem] flex items-center justify-center shadow-inner border-4 border-white dark:border-gray-800 overflow-hidden relative group">
+              {photoUrl ? (
+                <img src={photoUrl} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-4xl text-blue-300">👤</span>
+              )}
+              {uploadingImage && (
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                  <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              )}
+            </div>
+            
+            <button 
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadingImage}
+              className="absolute -bottom-2 -right-2 bg-blue-600 text-white p-3 rounded-xl shadow-lg border-2 border-white dark:border-gray-800 hover:bg-blue-700 active:scale-95 transition-all"
+            >
+              <Camera size={20} />
+            </button>
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              onChange={handleImageUpload} 
+              accept="image/*" 
+              className="hidden" 
+            />
+          </div>
+          <p className="text-xs text-gray-400 mt-4 text-center">بۆ گۆڕینی وێنەکە کلیک لە هێمای کامێراکە بکە</p>
+        </div>
         {/* Core Info */}
         <div>
           <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">ناوی تەواو</label>
@@ -316,6 +410,37 @@ export default function EditProfilePage() {
           </label>
         </div>
       </div>
+
+      {/* Cropper Modal */}
+      {imageSrc && (
+        <div className="fixed inset-0 z-[100] flex flex-col bg-black">
+          <div className="flex-1 relative">
+            <Cropper
+              image={imageSrc}
+              crop={crop}
+              zoom={1}
+              aspect={1}
+              cropShape="round"
+              onCropChange={setCrop}
+              onCropComplete={onCropComplete}
+            />
+          </div>
+          <div className="p-4 bg-gray-900 flex gap-4 pb-8">
+            <button
+              onClick={() => setImageSrc(null)}
+              className="flex-1 bg-gray-700 text-white py-3 rounded-xl font-bold"
+            >
+              پاشگەزبوونەوە
+            </button>
+            <button
+              onClick={handleCropSave}
+              className="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold"
+            >
+              بڕین و دانان
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
