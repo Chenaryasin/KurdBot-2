@@ -15,6 +15,8 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Camera } from "lucide-react";
 import Cropper from 'react-easy-crop';
+import { getCroppedImg } from '@/lib/cropImage';
+import imageCompression from 'browser-image-compression';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -213,9 +215,16 @@ export default function EditProfilePage() {
       const fileExt = file.name.split('.').pop();
       const fileName = `portfolio_${profile.id}_${Math.random()}.${fileExt}`;
       
+      const options = {
+        maxSizeMB: 0.2,
+        maxWidthOrHeight: 1200,
+        useWebWorker: true,
+      };
+      const compressedFile = await imageCompression(file, options);
+
       const { data, error } = await supabase.storage
         .from('portfolio')
-        .upload(fileName, file);
+        .upload(fileName, compressedFile);
 
       if (error) throw error;
 

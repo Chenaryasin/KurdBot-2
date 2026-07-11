@@ -5,6 +5,7 @@ import { getCities, getCategories, registerProfessional } from "../actions";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import imageCompression from 'browser-image-compression';
 import Cropper from 'react-easy-crop';
 import { getCroppedImg } from '@/lib/cropImage';
 
@@ -97,9 +98,16 @@ export default function RegisterPage() {
     let photo_url = null;
 
     if (file) {
+      const options = {
+        maxSizeMB: 0.2,
+        maxWidthOrHeight: 800,
+        useWebWorker: true,
+      };
+      const compressedFile = await imageCompression(file, options);
+
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random()}.${fileExt}`;
-      const { data, error } = await supabase.storage.from('profiles').upload(fileName, file);
+      const { data, error } = await supabase.storage.from('profiles').upload(fileName, compressedFile);
       
       if (!error && data) {
         photo_url = supabase.storage.from('profiles').getPublicUrl(fileName).data.publicUrl;

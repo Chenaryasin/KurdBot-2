@@ -1,7 +1,12 @@
 "use server";
 
-import { supabase } from "@/lib/supabase";
+import { supabaseServer as supabase } from "@/lib/supabase-server";
 import { revalidatePath } from "next/cache";
+import { getSessionUser } from "./auth-actions";
+
+function isAdmin(phone: string | undefined) {
+  return phone === "07502458972" || phone === "+9647502458972";
+}
 
 export async function getCities() {
   const { data, error } = await supabase.from("cities").select("*").order("name_ku");
@@ -26,7 +31,9 @@ export async function getProfessionals(cityId?: string, categoryId?: string, sea
       photo_url,
       created_at,
       cities ( name_ku ),
-      categories ( name_ku, icon )
+      categories ( name_ku, icon ),
+      favorites ( user_id ),
+      reviews ( rating )
     `)
     .eq("is_approved", true);
 
@@ -39,9 +46,29 @@ export async function getProfessionals(cityId?: string, categoryId?: string, sea
   }
 
   const { data, error } = await query.order("created_at", { ascending: false });
-  if (error) console.error("Error fetching professionals:", error);
-  
-  return data || [];
+  if (error) {
+    console.error("Error fetching professionals:", error);
+    return [];
+  }
+
+  const session = await getSessionUser();
+
+  return (data || []).map((p: any) => {
+    let avgRating = 0;
+    if (p.reviews && p.reviews.length > 0) {
+       avgRating = p.reviews.reduce((acc: number, r: any) => acc + r.rating, 0) / p.reviews.length;
+    }
+    
+    const isFavorite = session ? p.favorites?.some((f: any) => f.user_id === session.id) : false;
+
+    const { favorites, reviews, ...rest } = p;
+
+    return {
+      ...rest,
+      rating: avgRating,
+      is_favorite: isFavorite
+    };
+  });
 }
 
 import { unstable_noStore as noStore } from "next/cache";
@@ -55,7 +82,9 @@ export async function getProfessionalById(id: string) {
       degree, skills, work_locations,
       city_id, category_id,
       cities ( name_ku ),
-      categories ( name_ku, icon )
+      categories ( name_ku, icon ),
+      favorites ( user_id ),
+      reviews ( id, rating, comment, created_at, users ( name, photo_url ) )
     `)
     .eq("id", id)
     .single();
@@ -73,7 +102,24 @@ export async function getProfessionalById(id: string) {
         .eq("professional_id", id)
         .order("created_at", { ascending: false });
 
-      return { ...data, portfolio_images: images || [], is_professional: true };
+      const session = await getSessionUser();
+      
+      let avgRating = 0;
+      if (data.reviews && data.reviews.length > 0) {
+         avgRating = data.reviews.reduce((acc: number, r: any) => acc + r.rating, 0) / data.reviews.length;
+      }
+      
+      const isFavorite = session ? data.favorites?.some((f: any) => f.user_id === session.id) : false;
+
+      const { favorites, ...rest } = data;
+
+      return { 
+        ...rest, 
+        portfolio_images: images || [], 
+        is_professional: true,
+        rating: avgRating,
+        is_favorite: isFavorite
+      };
     } catch (e) {
       console.error(e);
       return { ...data, portfolio_images: [], is_professional: true };
@@ -125,9 +171,14 @@ export async function registerProfessional(formData: {
   telegram_id?: number | null;
   user_id?: number | null;
 }) {
+  const session = await getSessionUser();
+  if (!session) return { success: false, error: "Unauthorized" };
+
   const { error } = await supabase.from("professionals").insert([
     {
       ...formData,
+      telegram_id: session.telegram_id,
+      user_id: session.id,
       phone: normalizeText(formData.phone), // گۆڕینی ژمارەکان بۆ ئینگلیزی
       is_approved: false, // ئەدمین دەبێت قبوڵی بکات
     },
@@ -151,10 +202,16 @@ export async function updateProfessionalProfile(id: string, formData: {
   work_locations?: string;
   photo_url?: string;
 }) {
-  const { error } = await supabase
-    .from("professionals")
-    .update(formData)
-    .eq("id", id);
+  const session = await getSessionUser();
+  if (!session) return { success: false, error: "Unauthorized" };
+
+  let query = supabase.from("professionals").update(formData).eq("id", id);
+  
+  if (!isAdmin(session.phone)) {
+    query = query.eq("user_id", session.id);
+  }
+
+  const { error } = await query;
 
   if (error) {
     console.error("Error updating profile:", error);
@@ -165,6 +222,15 @@ export async function updateProfessionalProfile(id: string, formData: {
 }
 
 export async function addPortfolioImage(professional_id: string, image_url: string) {
+  const session = await getSessionUser();
+  if (!session) return { success: false, error: "Unauthorized" };
+
+  // Check ownership
+  if (!isAdmin(session.phone)) {
+    const { data: prof } = await supabase.from("professionals").select("user_id").eq("id", professional_id).single();
+    if (prof?.user_id !== session.id) return { success: false, error: "Unauthorized" };
+  }
+
   const { data, error } = await supabase
     .from("portfolio_images")
     .insert([{ professional_id, image_url }])
@@ -179,6 +245,18 @@ export async function addPortfolioImage(professional_id: string, image_url: stri
 }
 
 export async function deletePortfolioImage(imageId: number | string) {
+  const session = await getSessionUser();
+  if (!session) return { success: false, error: "Unauthorized" };
+
+  // Need to find professional_id first to check ownership
+  const { data: image } = await supabase.from("portfolio_images").select("professional_id").eq("id", imageId).single();
+  if (!image) return { success: false, error: "Not found" };
+
+  if (!isAdmin(session.phone)) {
+    const { data: prof } = await supabase.from("professionals").select("user_id").eq("id", image.professional_id).single();
+    if (prof?.user_id !== session.id) return { success: false, error: "Unauthorized" };
+  }
+
   const { error } = await supabase
     .from("portfolio_images")
     .delete()
@@ -194,6 +272,9 @@ export async function deletePortfolioImage(imageId: number | string) {
 }
 
 export async function approveProfessional(id: string) {
+  const session = await getSessionUser();
+  if (!session || !isAdmin(session.phone)) throw new Error("Unauthorized");
+
   const { error } = await supabase
     .from("professionals")
     .update({ is_approved: true })
@@ -237,6 +318,9 @@ function normalizeText(text: string) {
 }
 
 export async function deleteProfessional(id: string) {
+  const session = await getSessionUser();
+  if (!session || !isAdmin(session.phone)) throw new Error("Unauthorized");
+
   const { error } = await supabase
     .from("professionals")
     .delete()
@@ -325,6 +409,9 @@ export async function getMessages() {
 }
 
 export async function postAnnouncement(title: string, content: string) {
+  const session = await getSessionUser();
+  if (!session || !isAdmin(session.phone)) return { success: false, error: "Unauthorized" };
+
   const { error } = await supabase.from("announcements").insert([{ title, content }]);
   if (error) {
     console.error("Error posting announcement:", error);
@@ -392,6 +479,9 @@ export async function getBlockedUsers(searchQuery: string = "") {
 }
 
 export async function toggleBlockUser(id: string, isBlocked: boolean) {
+  const session = await getSessionUser();
+  if (!session || !isAdmin(session.phone)) throw new Error("Unauthorized");
+
   const { error } = await supabase
     .from("users")
     .update({ is_blocked: isBlocked })
@@ -400,7 +490,89 @@ export async function toggleBlockUser(id: string, isBlocked: boolean) {
   return true;
 }
 
+export async function updateUser(id: string, formData: {
+  name: string;
+  phone: string;
+  city_id: number;
+  photo_url?: string;
+}) {
+  const session = await getSessionUser();
+  if (!session) return { success: false, error: "Unauthorized" };
+
+  let query = supabase.from("users").update(formData).eq("id", id);
+  if (!isAdmin(session.phone)) {
+    query = query.eq("id", session.id);
+  }
+
+  const { error } = await query;
+  if (error) {
+    console.error("Error updating user:", error);
+    return { success: false, error: error.message };
+  }
+  revalidatePath("/", "layout");
+  return { success: true };
+}
+
+export async function toggleFavorite(professionalId: string) {
+  const session = await getSessionUser();
+  if (!session) return { success: false, error: "Unauthorized" };
+
+  const { data: existing } = await supabase
+    .from("favorites")
+    .select("id")
+    .eq("user_id", session.id)
+    .eq("professional_id", professionalId)
+    .single();
+
+  if (existing) {
+    const { error } = await supabase.from("favorites").delete().eq("id", existing.id);
+    if (error) return { success: false, error: error.message };
+  } else {
+    const { error } = await supabase.from("favorites").insert([{ user_id: session.id, professional_id: professionalId }]);
+    if (error) return { success: false, error: error.message };
+  }
+
+  revalidatePath("/", "layout");
+  return { success: true };
+}
+
+export async function addReview(professionalId: string, rating: number, comment: string) {
+  const session = await getSessionUser();
+  if (!session) return { success: false, error: "Unauthorized" };
+
+  // Can't review yourself
+  const { data: prof } = await supabase.from("professionals").select("user_id").eq("id", professionalId).single();
+  if (prof?.user_id === session.id) return { success: false, error: "ناتوانیت هەڵسەنگاندن بۆ خۆت بکەیت" };
+
+  // Check if already reviewed
+  const { data: existing } = await supabase
+    .from("reviews")
+    .select("id")
+    .eq("user_id", session.id)
+    .eq("professional_id", professionalId)
+    .single();
+
+  if (existing) {
+    return { success: false, error: "پێشتر هەڵسەنگاندنت کردووە" };
+  }
+
+  const { error } = await supabase.from("reviews").insert([{
+    user_id: session.id,
+    professional_id: professionalId,
+    rating,
+    comment
+  }]);
+
+  if (error) return { success: false, error: error.message };
+  
+  revalidatePath("/", "layout");
+  return { success: true };
+}
+
 export async function deleteUser(id: string) {
+  const session = await getSessionUser();
+  if (!session || !isAdmin(session.phone)) throw new Error("Unauthorized");
+
   const { error } = await supabase
     .from("users")
     .delete()

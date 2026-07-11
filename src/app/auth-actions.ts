@@ -1,6 +1,6 @@
 "use server";
 
-import { supabase } from "@/lib/supabase";
+import { supabaseServer as supabase } from "@/lib/supabase-server";
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";

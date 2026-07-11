@@ -63,7 +63,7 @@ export default function HomePage() {
         
         <Link 
           href="/search"
-          className="w-full bg-blue-600 dark:bg-blue-600 text-white font-bold py-5 px-6 rounded-2xl flex items-center justify-between shadow-lg shadow-blue-200 dark:shadow-none active:scale-95 transition-transform"
+          className="w-full bg-primary text-white font-bold py-5 px-6 rounded-2xl flex items-center justify-between shadow-lg shadow-blue-200 dark:shadow-none active:scale-95 transition-transform"
         >
           <div className="flex flex-col text-right">
             <span className="text-xl">دۆزینەوەی پسپۆڕ</span>
@@ -71,6 +71,19 @@ export default function HomePage() {
           </div>
           <span className="text-3xl bg-blue-500 p-2 rounded-xl">🔍</span>
         </Link>
+
+        {username && (
+          <Link 
+            href="/favorites"
+            className="w-full bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 font-bold py-4 px-6 rounded-2xl flex items-center justify-between shadow-sm border border-red-100 dark:border-red-900/30 active:scale-95 transition-transform"
+          >
+            <div className="flex flex-col text-right">
+              <span className="text-lg">دڵخوازەکانم</span>
+              <span className="text-red-400 dark:text-red-500/70 text-xs font-medium mt-1">ئەو وەستایانەی سەیڤت کردوون</span>
+            </div>
+            <span className="text-2xl bg-white dark:bg-red-900/50 p-2 rounded-xl">❤️</span>
+          </Link>
+        )}
 
         {/* removed register button */}
 

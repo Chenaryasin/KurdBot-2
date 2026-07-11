@@ -7,7 +7,8 @@ import Link from "next/link";
 import { Camera } from "lucide-react";
 import Cropper from 'react-easy-crop';
 import { getSessionUser } from "../../auth-actions";
-import { getUserById } from "../../actions";
+import { getUserById, updateUser } from "../../actions";
+import imageCompression from 'browser-image-compression';
 
 export default function EditUserProfilePage() {
   const router = useRouter();
@@ -85,13 +86,20 @@ export default function EditUserProfilePage() {
       const { getCroppedImg } = await import('@/lib/cropImage');
       const croppedFile = await getCroppedImg(imageSrc, croppedAreaPixels);
 
+      const options = {
+        maxSizeMB: 0.2,
+        maxWidthOrHeight: 800,
+        useWebWorker: true,
+      };
+      const compressedFile = await imageCompression(croppedFile as File, options);
+
       const fileExt = "jpg";
       const fileName = `user_${userId}_${Math.random()}.${fileExt}`;
       const filePath = `user_profiles/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from("profiles")
-        .upload(filePath, croppedFile);
+        .upload(filePath, compressedFile);
 
       if (uploadError) throw uploadError;
 
@@ -115,17 +123,14 @@ export default function EditUserProfilePage() {
 
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from("users")
-        .update({
-          name,
-          phone,
-          city_id: parseInt(cityId),
-          photo_url: photoUrl
-        })
-        .eq("id", userId);
+      const res = await updateUser(userId.toString(), {
+        name,
+        phone,
+        city_id: parseInt(cityId),
+        photo_url: photoUrl || undefined
+      });
 
-      if (error) throw error;
+      if (!res.success) throw new Error(res.error);
       
       router.back();
       router.refresh();
