@@ -43,10 +43,12 @@ export default function TelegramAuthWrapper({ children }: { children: React.Reac
           if (!res.registered) {
              if (pathname !== '/register') {
                router.replace("/register");
+               return;
              }
           } else {
              if (pathname === '/register') {
                router.replace("/");
+               return;
              }
           }
         }
