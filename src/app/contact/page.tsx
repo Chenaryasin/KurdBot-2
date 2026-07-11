@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { sendMessage } from "../actions";
 
@@ -8,6 +8,19 @@ export default function ContactPage() {
   const [formData, setFormData] = useState({ name: "", phone: "", message: "" });
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [isReadOnly, setIsReadOnly] = useState(false);
+
+  useEffect(() => {
+    async function loadUser() {
+      const { getSessionUser } = await import("../auth-actions");
+      const user = await getSessionUser();
+      if (user) {
+        setFormData(prev => ({ ...prev, name: user.name, phone: user.phone }));
+        setIsReadOnly(true);
+      }
+    }
+    loadUser();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,9 +67,12 @@ export default function ContactPage() {
               <input 
                 type="text" 
                 required 
+                readOnly={isReadOnly}
                 value={formData.name}
-                onChange={(e) => setFormData({...formData, name: e.target.value})}
-                className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onChange={(e) => !isReadOnly && setFormData({...formData, name: e.target.value})}
+                className={`w-full border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-gray-100 focus:outline-none ${
+                  isReadOnly ? "bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 cursor-not-allowed" : "bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-blue-500"
+                }`}
                 placeholder="ناوت لێرە بنووسە"
               />
             </div>
@@ -67,9 +83,12 @@ export default function ContactPage() {
                 type="tel" 
                 dir="ltr"
                 required 
+                readOnly={isReadOnly}
                 value={formData.phone}
-                onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 text-right"
+                onChange={(e) => !isReadOnly && setFormData({...formData, phone: e.target.value})}
+                className={`w-full border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-gray-100 focus:outline-none text-right ${
+                  isReadOnly ? "bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 cursor-not-allowed" : "bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-blue-500"
+                }`}
                 placeholder="0750 000 0000"
               />
             </div>
