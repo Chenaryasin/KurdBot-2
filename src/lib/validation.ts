@@ -16,6 +16,6 @@ export function isValidIraqPhoneNumber(phone: string): boolean {
   // - +9647(5|7|8|9)0-9{8} (starts with +9647, followed by 9 digits)
   // - 009647(5|7|8|9)0-9{8} (starts with 009647, followed by 9 digits)
   // - 7(5|7|8|9)0-9{8} (10 digits starting with 7)
-  const regex = /^(?:\+964|00964|0)?7[5789]\d{8}$/;
+  const regex = /^(?:\+964|00964|964|0)?7[5789]\d{8}$/;
   return regex.test(clean);
 }
