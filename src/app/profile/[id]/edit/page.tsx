@@ -11,8 +11,8 @@ import {
   getCategories 
 } from "../../../actions";
 import { createClient } from "@supabase/supabase-js";
-import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import { showAlert, showConfirm } from "@/lib/alerts";
 import { Camera } from "lucide-react";
 import Cropper from 'react-easy-crop';
 import { getCroppedImg } from '@/lib/cropImage';
@@ -66,7 +66,7 @@ export default function EditProfilePage() {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
       if (file.size > 5 * 1024 * 1024) {
-        alert("قەبارەی وێنەکە نابێت لە ٥ مێگابایت زیاتر بێت");
+        showAlert("قەبارەی وێنەکە نابێت لە ٥ مێگابایت زیاتر بێت");
         return;
       }
       const reader = new FileReader();
@@ -100,8 +100,7 @@ export default function EditProfilePage() {
       setPhotoUrl(data.publicUrl);
       setImageSrc(null); // close cropper
     } catch (error) {
-      console.error("Error uploading image:", error);
-      alert("کێشەیەک ڕوویدا لە بارکردنی وێنەکە");
+      showAlert("کێشەیەک ڕوویدا لە بارکردنی وێنەکە");
     } finally {
       setUploadingImage(false);
     }
@@ -194,9 +193,9 @@ export default function EditProfilePage() {
       // Reload profile to ensure we have the absolute latest IDs for new images
       const latestProfile = await getProfessionalById(profile.id);
       setProfile(latestProfile);
-      alert("زانیارییەکان بە سەرکەوتوویی نوێکرانەوە!");
+      showAlert("زانیارییەکان بە سەرکەوتوویی نوێکرانەوە!");
     } else {
-      alert("کێشەیەک ڕوویدا لە نوێکردنەوە.");
+      showAlert("کێشەیەک ڕوویدا لە نوێکردنەوە.");
     }
     setSaving(false);
   };
@@ -206,7 +205,7 @@ export default function EditProfilePage() {
     const file = e.target.files[0];
     
     if (file.size > 5 * 1024 * 1024) {
-      alert("قەبارەی وێنەکە نابێت لە ٥ مێگابایت زیاتر بێت!");
+      showAlert("قەبارەی وێنەکە نابێت لە ٥ مێگابایت زیاتر بێت!");
       return;
     }
 
@@ -244,31 +243,33 @@ export default function EditProfilePage() {
       }));
       
     } catch (error: any) {
-      alert("کێشە لە ئەپلۆدکردندا: " + error.message);
+      showAlert("کێشە لە ئەپلۆدکردندا: " + error.message);
     } finally {
       setUploading(false);
     }
   };
 
   const handleDeletePortfolioImage = async (imageId: number | string) => {
-    if (!confirm("دڵنیایت لە سڕینەوەی ئەم وێنەیە؟")) return;
-    
-    // If it's a pending image, just remove it from pending Add list
-    if (String(imageId).startsWith('pending-')) {
-      const imgObj = profile.portfolio_images.find((img: any) => img.id === imageId);
-      if (imgObj) {
-        setPendingAddImages(prev => prev.filter(url => url !== imgObj.image_url));
+    showConfirm("دڵنیایت لە سڕینەوەی ئەم وێنەیە؟", async (confirmed) => {
+      if (!confirmed) return;
+      
+      // If it's a pending image, just remove it from pending Add list
+      if (String(imageId).startsWith('pending-')) {
+        const imgObj = profile.portfolio_images.find((img: any) => img.id === imageId);
+        if (imgObj) {
+          setPendingAddImages(prev => prev.filter(url => url !== imgObj.image_url));
+        }
+      } else {
+        // Mark for deletion on save
+        setPendingDeleteImages((prev: any) => [...prev, imageId]);
       }
-    } else {
-      // Mark for deletion on save
-      setPendingDeleteImages((prev: any) => [...prev, imageId]);
-    }
-    
-    // Optimistically update UI
-    setProfile((prev: any) => ({
-      ...prev,
-      portfolio_images: prev.portfolio_images.filter((img: any) => img.id !== imageId)
-    }));
+      
+      // Optimistically update UI
+      setProfile((prev: any) => ({
+        ...prev,
+        portfolio_images: prev.portfolio_images.filter((img: any) => img.id !== imageId)
+      }));
+    });
   };
 
   if (loading) {

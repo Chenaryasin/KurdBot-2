@@ -8,6 +8,7 @@ import { supabase } from "@/lib/supabase";
 import imageCompression from 'browser-image-compression';
 import Cropper from 'react-easy-crop';
 import { getCroppedImg } from '@/lib/cropImage';
+import { showAlert } from "@/lib/alerts";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -112,7 +113,7 @@ export default function RegisterPage() {
       if (!error && data) {
         photo_url = supabase.storage.from('profiles').getPublicUrl(fileName).data.publicUrl;
       } else {
-        alert("کێشەیەک لە وێنەکەدا هەیە: " + (error?.message || "نەتوانرا ئەپلۆد بکرێت"));
+        showAlert("کێشەیەک لە وێنەکەدا هەیە: " + (error?.message || "نەتوانرا ئەپلۆد بکرێت"));
         setLoading(false);
         return;
       }
@@ -137,7 +138,7 @@ export default function RegisterPage() {
     if (result.success) {
       setSuccess(true);
     } else {
-      alert("کێشەیەک ڕوویدا لە کاتی ناردنی زانیارییەکان. تکایە دووبارە هەوڵ بدەرەوە.");
+      showAlert("کێشەیەک ڕوویدا لە کاتی ناردنی زانیارییەکان. تکایە دووبارە هەوڵ بدەرەوە.");
     }
   };
 

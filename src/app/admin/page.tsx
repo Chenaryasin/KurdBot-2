@@ -12,6 +12,7 @@ import {
 } from "../actions";
 import Link from "next/link";
 import { Send, Clock } from "lucide-react";
+import { showAlert, showConfirm } from "@/lib/alerts";
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<"approved" | "pending" | "messages" | "announcements" | "users" | "blocked">("pending");
@@ -86,7 +87,7 @@ export default function AdminPage() {
       setAnnouncementContent("");
       loadData();
     } else {
-      alert("هەڵەیەک ڕوویدا لە ناردنی پەیامەکە: " + res.error);
+      showAlert("هەڵەیەک ڕوویدا لە ناردنی پەیامەکە: " + res.error);
     }
   };
 
@@ -98,37 +99,43 @@ export default function AdminPage() {
   }, [activeTab, searchQuery]);
 
   const handleApprove = async (id: string) => {
-    if (confirm("دڵنیایت لە قبوڵکردنی ئەم وەستایە؟")) {
-      try {
-        await approveProfessional(id);
-        loadData();
-      } catch (error) {
-        alert("کێشەیەک ڕوویدا لە قبوڵکردنەکە.");
+    showConfirm("دڵنیایت لە قبوڵکردنی ئەم وەستایە؟", async (confirmed) => {
+      if (confirmed) {
+        try {
+          await approveProfessional(id);
+          loadData();
+        } catch (error) {
+          showAlert("کێشەیەک ڕوویدا لە قبوڵکردنەکە.");
+        }
       }
-    }
+    });
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm("دڵنیایت لە سڕینەوەی ئەم کەسە بە یەکجاری؟ ئەم کارە هەڵناوەشێتەوە!")) {
-      try {
-        await deleteProfessional(id);
-        loadData();
-      } catch (error) {
-        alert("کێشەیەک ڕوویدا لە سڕینەوەکە.");
+    showConfirm("دڵنیایت لە سڕینەوەی ئەم کەسە بە یەکجاری؟ ئەم کارە هەڵناوەشێتەوە!", async (confirmed) => {
+      if (confirmed) {
+        try {
+          await deleteProfessional(id);
+          loadData();
+        } catch (error) {
+          showAlert("کێشەیەک ڕوویدا لە سڕینەوەکە.");
+        }
       }
-    }
+    });
   };
 
   const handleDeleteUser = async (id: string) => {
-    if (confirm("دڵنیایت لە سڕینەوەی ئەم بەکارهێنەرە بە یەکجاری؟ هەموو زانیارییەکانی دەسڕێتەوە!")) {
-      try {
-        const { deleteUser } = await import("../actions");
-        await deleteUser(id);
-        loadData();
-      } catch (error) {
-        alert("کێشەیەک ڕوویدا لە سڕینەوەی بەکارهێنەرەکە.");
+    showConfirm("دڵنیایت لە سڕینەوەی ئەم بەکارهێنەرە بە یەکجاری؟ هەموو زانیارییەکانی دەسڕێتەوە!", async (confirmed) => {
+      if (confirmed) {
+        try {
+          const { deleteUser } = await import("../actions");
+          await deleteUser(id);
+          loadData();
+        } catch (error) {
+          showAlert("کێشەیەک ڕوویدا لە سڕینەوەی بەکارهێنەرەکە.");
+        }
       }
-    }
+    });
   };
 
   return (
@@ -288,11 +295,13 @@ export default function AdminPage() {
                   </Link>
                   <button 
                     onClick={async () => {
-                      if(confirm("دڵنیایت لە ڕاگرتنی (بلۆککردن)ی ئەم بەکارهێنەرە؟")) {
-                        const { toggleBlockUser } = await import("../actions");
-                        await toggleBlockUser(user.id, true);
-                        loadData();
-                      }
+                      showConfirm("دڵنیایت لە ڕاگرتنی (بلۆککردن)ی ئەم بەکارهێنەرە؟", async (confirmed) => {
+                        if (confirmed) {
+                          const { toggleBlockUser } = await import("../actions");
+                          await toggleBlockUser(user.id, true);
+                          loadData();
+                        }
+                      });
                     }}
                     className="flex-1 py-2 bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400 rounded-lg text-sm font-medium transition-colors"
                   >
@@ -343,11 +352,13 @@ export default function AdminPage() {
                   </Link>
                   <button 
                     onClick={async () => {
-                      if(confirm("دڵنیایت لە لابردنی بلۆکی ئەم بەکارهێنەرە؟")) {
-                        const { toggleBlockUser } = await import("../actions");
-                        await toggleBlockUser(user.id, false);
-                        loadData();
-                      }
+                      showConfirm("دڵنیایت لە لابردنی بلۆکی ئەم بەکارهێنەرە؟", async (confirmed) => {
+                        if (confirmed) {
+                          const { toggleBlockUser } = await import("../actions");
+                          await toggleBlockUser(user.id, false);
+                          loadData();
+                        }
+                      });
                     }}
                     className="flex-1 py-2 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded-lg text-sm font-bold transition-colors shadow-sm"
                   >

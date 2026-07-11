@@ -9,6 +9,7 @@ import Cropper from 'react-easy-crop';
 import { getSessionUser } from "../../auth-actions";
 import { getUserById, updateUser } from "../../actions";
 import imageCompression from 'browser-image-compression';
+import { showAlert } from "@/lib/alerts";
 
 export default function EditUserProfilePage() {
   const router = useRouter();
@@ -69,7 +70,7 @@ export default function EditUserProfilePage() {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
       if (file.size > 5 * 1024 * 1024) {
-        alert("قەبارەی وێنەکە نابێت لە ٥ مێگابایت زیاتر بێت");
+        showAlert("قەبارەی وێنەکە نابێت لە ٥ مێگابایت زیاتر بێت");
         return;
       }
       const reader = new FileReader();
@@ -110,8 +111,7 @@ export default function EditUserProfilePage() {
       setPhotoUrl(data.publicUrl);
       setImageSrc(null); // close cropper
     } catch (error) {
-      console.error("Error uploading image:", error);
-      alert("کێشەیەک ڕوویدا لە بارکردنی وێنەکە");
+      showAlert("کێشەیەک ڕوویدا لە بارکردنی وێنەکە");
     } finally {
       setUploadingImage(false);
     }
@@ -135,8 +135,7 @@ export default function EditUserProfilePage() {
       router.back();
       router.refresh();
     } catch (error) {
-      console.error(error);
-      alert("کێشەیەک ڕوویدا لە سەیڤکردنی زانیارییەکان");
+      showAlert("کێشەیەک ڕوویدا لە سەیڤکردنی زانیارییەکان");
     } finally {
       setSaving(false);
     }

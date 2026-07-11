@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { getProfessionalById, toggleFavorite, addReview } from "../../actions";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import { showAlert } from "@/lib/alerts";
 import { Heart, Star, PhoneCall, MessageCircle, Send } from "lucide-react";
 
 export default function ProfilePage() {
@@ -47,7 +48,7 @@ export default function ProfilePage() {
     if (res.success) {
       setProfile((prev: any) => ({ ...prev, is_favorite: !prev.is_favorite }));
     } else {
-      alert("کێشەیەک ڕوویدا: " + res.error);
+      showAlert("کێشەیەک ڕوویدا: " + res.error);
     }
     setTogglingFav(false);
   };
@@ -57,12 +58,12 @@ export default function ProfilePage() {
     setSubmittingReview(true);
     const res = await addReview(profile.id, reviewRating, reviewText);
     if (res.success) {
-      alert("هەڵسەنگاندنەکەت بە سەرکەوتوویی نێردرا!");
+      showAlert("هەڵسەنگاندنەکەت بە سەرکەوتوویی نێردرا!");
       const data = await getProfessionalById(id as string);
       setProfile(data);
       setReviewText("");
     } else {
-      alert("کێشەیەک ڕوویدا: " + res.error);
+      showAlert("کێشەیەک ڕوویدا: " + res.error);
     }
     setSubmittingReview(false);
   };

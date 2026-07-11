@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { User, Phone, LogOut, Briefcase, Heart } from "lucide-react";
 import { logout } from "../auth-actions";
+import { showConfirm } from "@/lib/alerts";
 
 export default function MyProfilePage() {
   const router = useRouter();
@@ -50,10 +51,12 @@ export default function MyProfilePage() {
   }, [router]);
 
   const handleLogout = async () => {
-    if (confirm("دڵنیایت لە دەرچوون لە هەژمارەکەت؟")) {
-      await logout();
-      router.push("/login");
-    }
+    showConfirm("دڵنیایت لە دەرچوون لە هەژمارەکەت؟", async (confirmed) => {
+      if (confirmed) {
+        await logout();
+        router.push("/login");
+      }
+    });
   };
 
   if (loading) {

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { sendMessage } from "../actions";
+import { showAlert } from "@/lib/alerts";
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({ name: "", phone: "", message: "" });
@@ -31,7 +32,7 @@ export default function ContactPage() {
     if (result.success) {
       setSuccess(true);
     } else {
-      alert("کێشەیەک ڕوویدا لە ناردنی پەیامەکە: " + result.error);
+      showAlert("کێشەیەک ڕوویدا لە ناردنی پەیامەکە: " + result.error);
     }
     setLoading(false);
   };
