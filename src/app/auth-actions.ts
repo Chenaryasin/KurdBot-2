@@ -104,7 +104,7 @@ export async function loginWithTelegram(telegramId: number) {
 
   // User exists, log them in
   const token = jwt.sign(
-    { id: user.id, name: user.name, phone: user.phone, telegram_id: user.telegram_id },
+    { id: user.id, name: user.name, phone: user.phone, telegram_id: user.telegram_id, role: user.role || "user" },
     JWT_SECRET,
     { expiresIn: "30d" }
   );
@@ -154,7 +154,7 @@ export async function registerUserWithTelegram(data: { name: string; phone: stri
 
   // Auto login
   const token = jwt.sign(
-    { id: newUser.id, name: newUser.name, phone: newUser.phone, telegram_id: newUser.telegram_id },
+    { id: newUser.id, name: newUser.name, phone: newUser.phone, telegram_id: newUser.telegram_id, role: newUser.role || "user" },
     JWT_SECRET,
     { expiresIn: "30d" }
   );
@@ -182,7 +182,7 @@ export async function getSessionUser() {
   if (!token) return null;
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { id: number; name: string; phone: string; telegram_id: number };
+    const decoded = jwt.verify(token, JWT_SECRET) as { id: number; name: string; phone: string; telegram_id: number; role?: string };
     return decoded;
   } catch (e) {
     return null;

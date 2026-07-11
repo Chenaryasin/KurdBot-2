@@ -17,8 +17,7 @@ export default function HomePage() {
         if (user) {
           setUsername(user.name);
           
-          // You can set the admin phone number here
-          if (user.phone === "07502458972" || user.phone === "+9647502458972") { 
+          if (user.role === "admin") { 
             setIsAdmin(true);
           }
 

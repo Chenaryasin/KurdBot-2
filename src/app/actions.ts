@@ -4,8 +4,15 @@ import { supabaseServer as supabase } from "@/lib/supabase-server";
 import { revalidatePath } from "next/cache";
 import { getSessionUser } from "./auth-actions";
 
-function isAdmin(phone: string | undefined) {
-  return phone === "07502458972" || phone === "+9647502458972";
+async function isAdmin(userId: number | undefined) {
+  if (!userId) return false;
+  const { data, error } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", userId)
+    .single();
+  if (error || !data) return false;
+  return data.role === "admin";
 }
 
 export async function getCities() {
@@ -207,7 +214,7 @@ export async function updateProfessionalProfile(id: string, formData: {
 
   let query = supabase.from("professionals").update(formData).eq("id", id);
   
-  if (!isAdmin(session.phone)) {
+  if (!(await isAdmin(session.id))) {
     query = query.eq("user_id", session.id);
   }
 
@@ -226,7 +233,7 @@ export async function addPortfolioImage(professional_id: string, image_url: stri
   if (!session) return { success: false, error: "Unauthorized" };
 
   // Check ownership
-  if (!isAdmin(session.phone)) {
+  if (!(await isAdmin(session.id))) {
     const { data: prof } = await supabase.from("professionals").select("user_id").eq("id", professional_id).single();
     if (prof?.user_id !== session.id) return { success: false, error: "Unauthorized" };
   }
@@ -252,7 +259,7 @@ export async function deletePortfolioImage(imageId: number | string) {
   const { data: image } = await supabase.from("portfolio_images").select("professional_id").eq("id", imageId).single();
   if (!image) return { success: false, error: "Not found" };
 
-  if (!isAdmin(session.phone)) {
+  if (!(await isAdmin(session.id))) {
     const { data: prof } = await supabase.from("professionals").select("user_id").eq("id", image.professional_id).single();
     if (prof?.user_id !== session.id) return { success: false, error: "Unauthorized" };
   }
@@ -273,7 +280,7 @@ export async function deletePortfolioImage(imageId: number | string) {
 
 export async function approveProfessional(id: string) {
   const session = await getSessionUser();
-  if (!session || !isAdmin(session.phone)) throw new Error("Unauthorized");
+  if (!session || !(await isAdmin(session.id))) throw new Error("Unauthorized");
 
   const { error } = await supabase
     .from("professionals")
@@ -285,6 +292,9 @@ export async function approveProfessional(id: string) {
 }
 
 export async function getPendingProfessionals() {
+  const session = await getSessionUser();
+  if (!session || !(await isAdmin(session.id))) throw new Error("Unauthorized");
+
   const { data, error } = await supabase
     .from("professionals")
     .select(`
@@ -319,7 +329,7 @@ function normalizeText(text: string) {
 
 export async function deleteProfessional(id: string) {
   const session = await getSessionUser();
-  if (!session || !isAdmin(session.phone)) throw new Error("Unauthorized");
+  if (!session || !(await isAdmin(session.id))) throw new Error("Unauthorized");
 
   const { error } = await supabase
     .from("professionals")
@@ -331,6 +341,9 @@ export async function deleteProfessional(id: string) {
 }
 
 export async function getAdminApprovedProfessionals(searchQuery: string = "") {
+  const session = await getSessionUser();
+  if (!session || !(await isAdmin(session.id))) throw new Error("Unauthorized");
+
   let query = supabase
     .from("professionals")
     .select(`
@@ -357,6 +370,9 @@ export async function getAdminApprovedProfessionals(searchQuery: string = "") {
 }
 
 export async function getPendingProfessionalsSearch(searchQuery: string = "") {
+  const session = await getSessionUser();
+  if (!session || !(await isAdmin(session.id))) throw new Error("Unauthorized");
+
   let query = supabase
     .from("professionals")
     .select(`
@@ -399,6 +415,9 @@ export async function sendMessage(formData: { name: string; phone: string; messa
 }
 
 export async function getMessages() {
+  const session = await getSessionUser();
+  if (!session || !(await isAdmin(session.id))) throw new Error("Unauthorized");
+
   const { data, error } = await supabase
     .from("messages")
     .select("*")
@@ -410,7 +429,7 @@ export async function getMessages() {
 
 export async function postAnnouncement(title: string, content: string) {
   const session = await getSessionUser();
-  if (!session || !isAdmin(session.phone)) return { success: false, error: "Unauthorized" };
+  if (!session || !(await isAdmin(session.id))) return { success: false, error: "Unauthorized" };
 
   const { error } = await supabase.from("announcements").insert([{ title, content }]);
   if (error) {
@@ -421,6 +440,9 @@ export async function postAnnouncement(title: string, content: string) {
 }
 
 export async function getAdminAnnouncements() {
+  const session = await getSessionUser();
+  if (!session || !(await isAdmin(session.id))) throw new Error("Unauthorized");
+
   const { data, error } = await supabase
     .from("announcements")
     .select("*")
@@ -431,6 +453,9 @@ export async function getAdminAnnouncements() {
 
 // User Administration
 export async function getAdminUsers(searchQuery: string = "") {
+  const session = await getSessionUser();
+  if (!session || !(await isAdmin(session.id))) throw new Error("Unauthorized");
+
   let query = supabase
     .from("users")
     .select(`
@@ -455,6 +480,9 @@ export async function getAdminUsers(searchQuery: string = "") {
 }
 
 export async function getBlockedUsers(searchQuery: string = "") {
+  const session = await getSessionUser();
+  if (!session || !(await isAdmin(session.id))) throw new Error("Unauthorized");
+
   let query = supabase
     .from("users")
     .select(`
@@ -480,7 +508,7 @@ export async function getBlockedUsers(searchQuery: string = "") {
 
 export async function toggleBlockUser(id: string, isBlocked: boolean) {
   const session = await getSessionUser();
-  if (!session || !isAdmin(session.phone)) throw new Error("Unauthorized");
+  if (!session || !(await isAdmin(session.id))) throw new Error("Unauthorized");
 
   const { error } = await supabase
     .from("users")
@@ -500,7 +528,7 @@ export async function updateUser(id: string, formData: {
   if (!session) return { success: false, error: "Unauthorized" };
 
   let query = supabase.from("users").update(formData).eq("id", id);
-  if (!isAdmin(session.phone)) {
+  if (!(await isAdmin(session.id))) {
     query = query.eq("id", session.id);
   }
 
@@ -571,7 +599,7 @@ export async function addReview(professionalId: string, rating: number, comment:
 
 export async function deleteUser(id: string) {
   const session = await getSessionUser();
-  if (!session || !isAdmin(session.phone)) throw new Error("Unauthorized");
+  if (!session || !(await isAdmin(session.id))) throw new Error("Unauthorized");
 
   const { error } = await supabase
     .from("users")
