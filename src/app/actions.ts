@@ -3,6 +3,7 @@
 import { supabaseServer as supabase } from "@/lib/supabase-server";
 import { revalidatePath } from "next/cache";
 import { getSessionUser } from "./auth-actions";
+import { isValidIraqPhoneNumber } from "@/lib/validation";
 
 async function isAdmin(userId: number | undefined) {
   if (!userId) return false;
@@ -186,8 +187,8 @@ export async function registerProfessional(formData: {
       ...formData,
       telegram_id: session.telegram_id,
       user_id: session.id,
-      phone: normalizeText(formData.phone), // گۆڕینی ژمارەکان بۆ ئینگلیزی
-      is_approved: false, // ئەدمین دەبێت قبوڵی بکات
+      phone: session.phone, // Force the user's verified telegram phone number
+      is_approved: false, // Admin must approve first
     },
   ]);
 
@@ -399,6 +400,10 @@ export async function getPendingProfessionalsSearch(searchQuery: string = "") {
 }
 
 export async function sendMessage(formData: { name: string; phone: string; message: string }) {
+  if (!isValidIraqPhoneNumber(formData.phone)) {
+    return { success: false, error: "تکایە ژمارەیەکی مۆبایلی دروست بنووسە" };
+  }
+
   const { error } = await supabase.from("messages").insert([
     {
       sender_name: formData.name,
@@ -527,7 +532,13 @@ export async function updateUser(id: string, formData: {
   const session = await getSessionUser();
   if (!session) return { success: false, error: "Unauthorized" };
 
-  let query = supabase.from("users").update(formData).eq("id", id);
+  const updateData = {
+    name: formData.name,
+    city_id: formData.city_id,
+    photo_url: formData.photo_url
+  };
+
+  let query = supabase.from("users").update(updateData).eq("id", id);
   if (!(await isAdmin(session.id))) {
     query = query.eq("id", session.id);
   }

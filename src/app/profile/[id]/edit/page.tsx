@@ -346,11 +346,11 @@ export default function EditProfilePage() {
         <div>
           <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">ژمارەی مۆبایل</label>
           <input 
+            readOnly
             type="tel" 
             dir="ltr"
             value={formData.phone}
-            onChange={(e) => setFormData({...formData, phone: e.target.value})}
-            className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 text-right"
+            className="w-full bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-400 dark:text-gray-500 cursor-not-allowed focus:outline-none text-right"
           />
         </div>
 

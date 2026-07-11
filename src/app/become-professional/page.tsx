@@ -189,12 +189,11 @@ export default function RegisterPage() {
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">ژمارەی مۆبایل</label>
           <input 
             required
+            readOnly
             type="tel"
             dir="ltr"
-            className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 outline-none focus:border-blue-500 transition-colors text-right text-gray-900 dark:text-gray-100"
-            placeholder="07XX XXX XXXX"
+            className="w-full bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 outline-none cursor-not-allowed text-right text-gray-400 dark:text-gray-500"
             value={formData.phone}
-            onChange={(e) => setFormData({...formData, phone: e.target.value})}
           />
         </div>
 
