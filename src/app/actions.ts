@@ -213,6 +213,13 @@ export async function updateProfessionalProfile(id: string, formData: {
   const session = await getSessionUser();
   if (!session) return { success: false, error: "Unauthorized" };
 
+  // Fetch the current professional record to get their old photo_url
+  const { data: currentProf } = await supabase
+    .from("professionals")
+    .select("photo_url")
+    .eq("id", id)
+    .single();
+
   let query = supabase.from("professionals").update(formData).eq("id", id);
   
   if (!(await isAdmin(session.id))) {
@@ -225,6 +232,12 @@ export async function updateProfessionalProfile(id: string, formData: {
     console.error("Error updating profile:", error);
     return { success: false, error: error.message };
   }
+
+  // If update succeeded and a new photo was set, delete the old photo from storage
+  if (formData.photo_url && currentProf?.photo_url && currentProf.photo_url !== formData.photo_url) {
+    await deleteStorageFileByUrl(currentProf.photo_url);
+  }
+
   revalidatePath("/", "layout");
   return { success: true };
 }
@@ -256,8 +269,8 @@ export async function deletePortfolioImage(imageId: number | string) {
   const session = await getSessionUser();
   if (!session) return { success: false, error: "Unauthorized" };
 
-  // Need to find professional_id first to check ownership
-  const { data: image } = await supabase.from("portfolio_images").select("professional_id").eq("id", imageId).single();
+  // Need to find professional_id and image_url first to check ownership and delete from storage
+  const { data: image } = await supabase.from("portfolio_images").select("professional_id, image_url").eq("id", imageId).single();
   if (!image) return { success: false, error: "Not found" };
 
   if (!(await isAdmin(session.id))) {
@@ -273,6 +286,11 @@ export async function deletePortfolioImage(imageId: number | string) {
   if (error) {
     console.error("Error deleting portfolio image:", error);
     return { success: false, error: error.message };
+  }
+
+  // Delete from storage
+  if (image.image_url) {
+    await deleteStorageFileByUrl(image.image_url);
   }
 
   revalidatePath("/", "layout");
@@ -328,9 +346,48 @@ function normalizeText(text: string) {
   return result;
 }
 
+export async function deleteStorageFileByUrl(url: string | null | undefined) {
+  if (!url) return;
+  try {
+    if (!url.includes("/storage/v1/object/public/")) return;
+    const parts = url.split("/storage/v1/object/public/");
+    if (parts.length < 2) return;
+    
+    const bucketAndPath = parts[1];
+    const slashIndex = bucketAndPath.indexOf("/");
+    if (slashIndex === -1) return;
+    
+    const bucket = bucketAndPath.substring(0, slashIndex);
+    const filePath = bucketAndPath.substring(slashIndex + 1);
+    
+    const { error } = await supabase.storage.from(bucket).remove([filePath]);
+    if (error) {
+      console.error(`Error deleting storage file (${url}):`, error.message);
+    }
+  } catch (e) {
+    console.error("Error in deleteStorageFileByUrl:", e);
+  }
+}
+
 export async function deleteProfessional(id: string) {
   const session = await getSessionUser();
   if (!session || !(await isAdmin(session.id))) throw new Error("Unauthorized");
+
+  // 1. Get professional photo_url
+  const { data: prof } = await supabase
+    .from("professionals")
+    .select("photo_url")
+    .eq("id", id)
+    .single();
+
+  // 2. Get portfolio images
+  const { data: portfolioImages } = await supabase
+    .from("portfolio_images")
+    .select("image_url")
+    .eq("professional_id", id);
+
+  // 3. Delete portfolio images first to prevent FK constraint issues
+  await supabase.from("portfolio_images").delete().eq("professional_id", id);
 
   const { error } = await supabase
     .from("professionals")
@@ -338,6 +395,17 @@ export async function deleteProfessional(id: string) {
     .eq("id", id);
     
   if (error) throw new Error(error.message);
+
+  // 4. Delete files from storage
+  if (prof?.photo_url) {
+    await deleteStorageFileByUrl(prof.photo_url);
+  }
+  if (portfolioImages && portfolioImages.length > 0) {
+    for (const img of portfolioImages) {
+      await deleteStorageFileByUrl(img.image_url);
+    }
+  }
+
   return true;
 }
 
@@ -532,6 +600,13 @@ export async function updateUser(id: string, formData: {
   const session = await getSessionUser();
   if (!session) return { success: false, error: "Unauthorized" };
 
+  // Fetch the current user record to get their old photo_url
+  const { data: currentUser } = await supabase
+    .from("users")
+    .select("photo_url")
+    .eq("id", id)
+    .single();
+
   const updateData = {
     name: formData.name,
     city_id: formData.city_id,
@@ -548,6 +623,12 @@ export async function updateUser(id: string, formData: {
     console.error("Error updating user:", error);
     return { success: false, error: error.message };
   }
+
+  // If update succeeded and a new photo was set, delete the old photo from storage
+  if (formData.photo_url && currentUser?.photo_url && currentUser.photo_url !== formData.photo_url) {
+    await deleteStorageFileByUrl(currentUser.photo_url);
+  }
+
   revalidatePath("/", "layout");
   return { success: true };
 }
@@ -612,10 +693,37 @@ export async function deleteUser(id: string) {
   const session = await getSessionUser();
   if (!session || !(await isAdmin(session.id))) throw new Error("Unauthorized");
 
+  // 1. Get user photo_url
+  const { data: user } = await supabase
+    .from("users")
+    .select("photo_url")
+    .eq("id", id)
+    .single();
+
+  // 2. Check if they have a professional profile
+  const { data: prof } = await supabase
+    .from("professionals")
+    .select("id")
+    .eq("user_id", id)
+    .single();
+
+  // 3. Delete professional profile if it exists (which also cleans up their storage files!)
+  if (prof) {
+    await deleteProfessional(prof.id);
+  }
+
+  // 4. Delete user from database
   const { error } = await supabase
     .from("users")
     .delete()
     .eq("id", id);
+    
   if (error) throw new Error(error.message);
+
+  // 5. Delete user photo from storage
+  if (user?.photo_url) {
+    await deleteStorageFileByUrl(user.photo_url);
+  }
+
   return true;
 }
