@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
-import { User, Phone, LogOut, Briefcase } from "lucide-react";
+import { User, Phone, LogOut, Briefcase, Heart } from "lucide-react";
 import { logout } from "../auth-actions";
 
 export default function MyProfilePage() {
@@ -93,6 +93,19 @@ export default function MyProfilePage() {
       </div>
 
       <div className="px-4 mt-8 space-y-4">
+        
+        <Link 
+          href="/favorites"
+          className="w-full bg-white dark:bg-gray-800 border-2 border-red-100 dark:border-red-900/30 text-gray-800 dark:text-gray-200 font-medium py-4 px-6 rounded-2xl flex items-center justify-between shadow-sm active:scale-95 transition-transform"
+        >
+          <div className="flex flex-col text-right">
+            <span className="text-lg font-bold text-red-500">دڵخوازەکانم</span>
+            <span className="text-xs text-gray-500 mt-1">ئەو وەستایانەی سەیڤت کردوون</span>
+          </div>
+          <div className="bg-red-50 dark:bg-red-900/30 p-3 rounded-xl text-red-500">
+            <Heart size={24} className="fill-current" />
+          </div>
+        </Link>
         
         {professionalId ? (
           <Link 
