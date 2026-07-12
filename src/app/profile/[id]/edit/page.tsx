@@ -236,6 +236,7 @@ export default function EditProfilePage() {
       // Reload profile to ensure we have the absolute latest IDs for new images
       const latestProfile = await getProfessionalById(profile.id);
       setProfile(latestProfile);
+      setUploadedImages([]); // Clear uploadedImages so back button won't delete them
       showAlert("زانیارییەکان بە سەرکەوتوویی نوێکرانەوە!");
     } else {
       showAlert("کێشەیەک ڕوویدا لە نوێکردنەوە.");

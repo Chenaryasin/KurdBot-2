@@ -146,6 +146,7 @@ export default function EditUserProfilePage() {
       
       // Clean up other temporary images we uploaded during this session
       await cleanUpUnusedImages(photoUrl);
+      setUploadedImages([]); // Clear uploadedImages so back button won't delete them
 
       router.back();
       router.refresh();
