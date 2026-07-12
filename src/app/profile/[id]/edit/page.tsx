@@ -57,6 +57,7 @@ export default function EditProfilePage() {
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
 
   const onCropComplete = useCallback((croppedArea: any, croppedAreaPixels: any) => {
     setCroppedAreaPixels(croppedAreaPixels);
@@ -97,12 +98,23 @@ export default function EditProfilePage() {
         .from("profiles")
         .getPublicUrl(filePath);
 
+      // Add to tracked uploaded images list
+      setUploadedImages(prev => [...prev, data.publicUrl]);
       setPhotoUrl(data.publicUrl);
       setImageSrc(null); // close cropper
     } catch (error) {
       showAlert("کێشەیەک ڕوویدا لە بارکردنی وێنەکە");
     } finally {
       setUploadingImage(false);
+    }
+  };
+
+  const cleanUpUnusedImages = async (currentSavedUrl: string, currentSavedPortfolioUrls: string[]) => {
+    // Delete any image we uploaded during this session that was not saved
+    const unsaved = uploadedImages.filter(url => url !== currentSavedUrl && !currentSavedPortfolioUrls.includes(url));
+    for (const url of unsaved) {
+      const { deleteStorageFileByUrl } = await import("../../../actions");
+      await deleteStorageFileByUrl(url);
     }
   };
 
@@ -157,6 +169,20 @@ export default function EditProfilePage() {
     loadData();
   }, [id]);
 
+  const handleCancel = async () => {
+    // User is leaving without saving, delete ALL images we uploaded during this session
+    setSaving(true);
+    try {
+      for (const url of uploadedImages) {
+        const { deleteStorageFileByUrl } = await import("../../../actions");
+        await deleteStorageFileByUrl(url);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    router.back();
+  };
+
   const handleSave = async () => {
     if (!profile) return;
     setSaving(true);
@@ -171,6 +197,9 @@ export default function EditProfilePage() {
       await deletePortfolioImage(id);
     }
     
+    // Clean up other temporary images we uploaded during this session
+    await cleanUpUnusedImages(photoUrl, pendingAddImages);
+
     // Clear pending states
     setPendingAddImages([]);
     setPendingDeleteImages([]);
@@ -233,6 +262,9 @@ export default function EditProfilePage() {
 
       const imageUrl = publicUrlData.publicUrl;
       
+      // Add to tracked uploaded images list
+      setUploadedImages(prev => [...prev, imageUrl]);
+      
       // Instead of adding immediately, add to pending list
       setPendingAddImages(prev => [...prev, imageUrl]);
       
@@ -291,7 +323,7 @@ export default function EditProfilePage() {
     <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900 p-4 pb-32">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6 mt-2">
-        <button onClick={() => router.back()} className="w-10 h-10 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center shadow-sm text-xl border border-gray-100 dark:border-gray-700 flex-shrink-0 active:scale-95 transition-transform">
+        <button onClick={handleCancel} className="w-10 h-10 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center shadow-sm text-xl border border-gray-100 dark:border-gray-700 flex-shrink-0 active:scale-95 transition-transform">
           🔙
         </button>
         <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">دەستکاریکردنی پڕۆفایل</h1>

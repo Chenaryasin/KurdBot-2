@@ -25,6 +25,7 @@ export default function EditUserProfilePage() {
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
 
   useEffect(() => {
     async function loadData() {
@@ -108,12 +109,23 @@ export default function EditUserProfilePage() {
         .from("profiles")
         .getPublicUrl(filePath);
 
+      // Add the new public URL to our tracked uploaded images state
+      setUploadedImages(prev => [...prev, data.publicUrl]);
       setPhotoUrl(data.publicUrl);
       setImageSrc(null); // close cropper
     } catch (error) {
       showAlert("کێشەیەک ڕوویدا لە بارکردنی وێنەکە");
     } finally {
       setUploadingImage(false);
+    }
+  };
+
+  const cleanUpUnusedImages = async (currentSavedUrl: string) => {
+    // Delete any image we uploaded during this session that is not the one we ended up saving
+    const unsaved = uploadedImages.filter(url => url !== currentSavedUrl);
+    for (const url of unsaved) {
+      const { deleteStorageFileByUrl } = await import("../../actions");
+      await deleteStorageFileByUrl(url);
     }
   };
 
@@ -132,6 +144,9 @@ export default function EditUserProfilePage() {
 
       if (!res.success) throw new Error(res.error);
       
+      // Clean up other temporary images we uploaded during this session
+      await cleanUpUnusedImages(photoUrl);
+
       router.back();
       router.refresh();
     } catch (error) {
@@ -141,6 +156,20 @@ export default function EditUserProfilePage() {
     }
   };
 
+  const handleCancel = async () => {
+    // User is leaving without saving, delete ALL images we uploaded during this session
+    setSaving(true);
+    try {
+      for (const url of uploadedImages) {
+        const { deleteStorageFileByUrl } = await import("../../actions");
+        await deleteStorageFileByUrl(url);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    router.back();
+  };
+
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center text-gray-500">چاوەڕێ بکە...</div>;
   }
@@ -148,7 +177,7 @@ export default function EditUserProfilePage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 pb-28">
       <div className="flex items-center gap-3 mb-6 mt-2">
-        <button type="button" onClick={() => router.back()} className="w-10 h-10 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center shadow-sm text-xl border border-gray-100 dark:border-gray-700 flex-shrink-0 active:scale-95 transition-transform">
+        <button type="button" onClick={handleCancel} className="w-10 h-10 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center shadow-sm text-xl border border-gray-100 dark:border-gray-700 flex-shrink-0 active:scale-95 transition-transform">
           🔙
         </button>
         <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">دەستکاریکردنی پڕۆفایل</h1>
