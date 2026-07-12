@@ -110,8 +110,22 @@ export default function EditProfilePage() {
   };
 
   const cleanUpUnusedImages = async (currentSavedUrl: string, currentSavedPortfolioUrls: string[]) => {
+    console.log("--- CLEANUP STORAGE DIAGNOSTIC ---");
+    console.log("uploadedImages in state:", uploadedImages);
+    console.log("currentSavedUrl (profile photo):", currentSavedUrl);
+    console.log("currentSavedPortfolioUrls (portfolio):", currentSavedPortfolioUrls);
+    
     // Delete any image we uploaded during this session that was not saved
-    const unsaved = uploadedImages.filter(url => url !== currentSavedUrl && !currentSavedPortfolioUrls.includes(url));
+    const unsaved = uploadedImages.filter(url => {
+      const isProfilePhoto = url === currentSavedUrl;
+      const isPortfolioPhoto = currentSavedPortfolioUrls.includes(url);
+      console.log(`URL: ${url} -> isProfile: ${isProfilePhoto}, isPortfolio: ${isPortfolioPhoto}`);
+      return !isProfilePhoto && !isPortfolioPhoto;
+    });
+
+    console.log("unsaved URLs marked for deletion:", unsaved);
+    console.log("----------------------------------");
+
     for (const url of unsaved) {
       const { deleteStorageFileByUrl } = await import("../../../actions");
       await deleteStorageFileByUrl(url);
