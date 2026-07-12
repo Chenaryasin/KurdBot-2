@@ -261,16 +261,27 @@ export default function EditUserProfilePage() {
           </div>
           <div className="p-4 bg-gray-900 flex gap-4 pb-8">
             <button
+              type="button"
+              disabled={uploadingImage}
               onClick={() => setImageSrc(null)}
-              className="flex-1 bg-gray-700 text-white py-3 rounded-xl font-bold"
+              className="flex-1 bg-gray-700 text-white py-3 rounded-xl font-bold disabled:opacity-50"
             >
               پاشگەزبوونەوە
             </button>
             <button
+              type="button"
+              disabled={uploadingImage}
               onClick={handleCropSave}
-              className="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold"
+              className="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              بڕین و دانان
+              {uploadingImage ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>پڕۆسێس دەکات...</span>
+                </>
+              ) : (
+                "بڕین و دانان"
+              )}
             </button>
           </div>
         </div>
