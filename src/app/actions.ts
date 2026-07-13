@@ -3,7 +3,7 @@
 import { supabaseServer as supabase } from "@/lib/supabase-server";
 import { revalidatePath } from "next/cache";
 import { getSessionUser } from "./auth-actions";
-import { isValidIraqPhoneNumber } from "@/lib/validation";
+import { isValidIraqPhoneNumber, sanitizeInput } from "@/lib/validation";
 
 async function isAdmin(userId: number | undefined) {
   if (!userId) return false;
@@ -185,6 +185,7 @@ export async function registerProfessional(formData: {
   const { error } = await supabase.from("professionals").insert([
     {
       ...formData,
+      name: sanitizeInput(formData.name),
       telegram_id: session.telegram_id,
       user_id: session.id,
       phone: session.phone, // Force the user's verified telegram phone number
@@ -220,7 +221,15 @@ export async function updateProfessionalProfile(id: string, formData: {
     .eq("id", id)
     .single();
 
-  let query = supabase.from("professionals").update(formData).eq("id", id);
+  const sanitizedData = {
+    ...formData,
+    name: formData.name ? sanitizeInput(formData.name) : undefined,
+    degree: formData.degree ? sanitizeInput(formData.degree) : undefined,
+    skills: formData.skills ? sanitizeInput(formData.skills) : undefined,
+    work_locations: formData.work_locations ? sanitizeInput(formData.work_locations) : undefined,
+  };
+
+  let query = supabase.from("professionals").update(sanitizedData).eq("id", id);
   
   if (!(await isAdmin(session.id))) {
     query = query.eq("user_id", session.id);
@@ -474,9 +483,9 @@ export async function sendMessage(formData: { name: string; phone: string; messa
 
   const { error } = await supabase.from("messages").insert([
     {
-      sender_name: formData.name,
+      sender_name: sanitizeInput(formData.name),
       phone: normalizeText(formData.phone),
-      message_text: formData.message,
+      message_text: sanitizeInput(formData.message),
     },
   ]);
 
@@ -504,7 +513,10 @@ export async function postAnnouncement(title: string, content: string) {
   const session = await getSessionUser();
   if (!session || !(await isAdmin(session.id))) return { success: false, error: "Unauthorized" };
 
-  const { error } = await supabase.from("announcements").insert([{ title, content }]);
+  const { error } = await supabase.from("announcements").insert([{ 
+    title: sanitizeInput(title), 
+    content: sanitizeInput(content) 
+  }]);
   if (error) {
     console.error("Error posting announcement:", error);
     return { success: false, error: error.message };
@@ -608,7 +620,7 @@ export async function updateUser(id: string, formData: {
     .single();
 
   const updateData = {
-    name: formData.name,
+    name: sanitizeInput(formData.name),
     city_id: formData.city_id,
     photo_url: formData.photo_url
   };
@@ -680,7 +692,7 @@ export async function addReview(professionalId: string, rating: number, comment:
     user_id: session.id,
     professional_id: professionalId,
     rating,
-    comment
+    comment: sanitizeInput(comment)
   }]);
 
   if (error) return { success: false, error: error.message };

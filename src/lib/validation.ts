@@ -19,3 +19,11 @@ export function isValidIraqPhoneNumber(phone: string): boolean {
   const regex = /^(?:\+964|00964|964|0)?7[5789]\d{8}$/;
   return regex.test(clean);
 }
+
+export function sanitizeInput(text: string | null | undefined): string {
+  if (!text) return "";
+  return text
+    .replace(/<[^>]*>/g, "") // Strip HTML tags
+    .replace(/javascript:/gi, "") // Strip dangerous URI schemes
+    .trim();
+}
