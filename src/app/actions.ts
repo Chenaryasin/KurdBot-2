@@ -4,6 +4,7 @@ import { supabaseServer as supabase } from "@/lib/supabase-server";
 import { revalidatePath } from "next/cache";
 import { getSessionUser } from "./auth-actions";
 import { isValidIraqPhoneNumber, sanitizeInput } from "@/lib/validation";
+import { headers } from "next/headers";
 
 async function isAdmin(userId: number | undefined) {
   if (!userId) return false;
@@ -181,6 +182,12 @@ export async function registerProfessional(formData: {
 }) {
   const session = await getSessionUser();
   if (!session) return { success: false, error: "Unauthorized" };
+
+  const { checkRateLimit } = await import("./auth-actions");
+  const limitCheck = await checkRateLimit(session.id.toString(), "register_professional", 3, 60);
+  if (!limitCheck.success) {
+    return { success: false, error: `تکایە ${limitCheck.timeLeft || 60} چرکەی تر چاوەڕێ بکە پێش هەوڵدان بۆ ناردنی داواکاری نوێ.` };
+  }
 
   const { error } = await supabase.from("professionals").insert([
     {
@@ -477,6 +484,15 @@ export async function getPendingProfessionalsSearch(searchQuery: string = "") {
 }
 
 export async function sendMessage(formData: { name: string; phone: string; message: string }) {
+  const headerList = await headers();
+  const ip = headerList.get("x-forwarded-for") || "unknown-ip";
+  
+  const { checkRateLimit } = await import("./auth-actions");
+  const limitCheck = await checkRateLimit(ip, "send_message", 3, 60);
+  if (!limitCheck.success) {
+    return { success: false, error: `تکایە ${limitCheck.timeLeft || 60} چرکەی تر چاوەڕێ بکە پێش ناردنی نامەی نوێ.` };
+  }
+
   if (!isValidIraqPhoneNumber(formData.phone)) {
     return { success: false, error: "تکایە ژمارەیەکی مۆبایلی دروست بنووسە" };
   }

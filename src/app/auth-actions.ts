@@ -1,7 +1,7 @@
 "use server";
 
 import { supabaseServer as supabase } from "@/lib/supabase-server";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { isValidIraqPhoneNumber } from "@/lib/validation";
@@ -127,6 +127,13 @@ export async function loginWithTelegram(telegramId: number) {
 }
 
 export async function registerUserWithTelegram(data: { name: string; phone: string; city_id: number; telegram_id: number }) {
+  const headerList = await headers();
+  const ip = headerList.get("x-forwarded-for") || "unknown-ip";
+  const limitCheck = await checkRateLimit(ip, "register_user", 3, 60);
+  if (!limitCheck.success) {
+    return { success: false, error: `تکایە ${limitCheck.timeLeft || 60} چرکەی تر چاوەڕێ بکە پێش هەوڵدان بۆ تۆمارکردنی نوێ.` };
+  }
+
   if (!isValidIraqPhoneNumber(data.phone)) {
     return { success: false, error: "تکایە ژمارەیەکی مۆبایلی دروستی عێراق داخڵ بکە (نمونە: 07501234567)" };
   }
@@ -196,5 +203,63 @@ export async function getSessionUser() {
     return decoded;
   } catch (e) {
     return null;
+  }
+}
+
+export async function checkRateLimit(
+  identifier: string,
+  action: string,
+  maxRequests: number,
+  windowSeconds: number
+): Promise<{ success: boolean; timeLeft?: number }> {
+  try {
+    const windowStart = new Date(Date.now() - windowSeconds * 1000).toISOString();
+
+    // 1. Get request count in the window
+    const { count, error } = await supabase
+      .from("rate_limits")
+      .select("*", { count: "exact", head: true })
+      .eq("identifier", identifier)
+      .eq("action", action)
+      .gte("created_at", windowStart);
+
+    if (error) {
+      console.error("Rate limit check error:", error);
+      return { success: true }; // Fallback to allow request in case of DB error
+    }
+
+    if (count !== null && count >= maxRequests) {
+      // Find oldest request in window to calculate time left
+      const { data } = await supabase
+        .from("rate_limits")
+        .select("created_at")
+        .eq("identifier", identifier)
+        .eq("action", action)
+        .gte("created_at", windowStart)
+        .order("created_at", { ascending: true })
+        .limit(1);
+
+      let timeLeft = windowSeconds;
+      if (data && data[0]) {
+        const oldestTime = new Date(data[0].created_at).getTime();
+        const nextAllowedTime = oldestTime + windowSeconds * 1000;
+        timeLeft = Math.max(1, Math.ceil((nextAllowedTime - Date.now()) / 1000));
+      }
+      return { success: false, timeLeft };
+    }
+
+    // 2. Insert new request
+    await supabase.from("rate_limits").insert([{ identifier, action }]);
+
+    // 3. Random cleanup (5% chance on check to delete records older than 24 hours)
+    if (Math.random() < 0.05) {
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      await supabase.from("rate_limits").delete().lt("created_at", oneDayAgo);
+    }
+
+    return { success: true };
+  } catch (err) {
+    console.error("Rate limiting logic failed:", err);
+    return { success: true };
   }
 }
