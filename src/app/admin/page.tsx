@@ -463,7 +463,7 @@ export default function AdminPage() {
                   )}
                   <button 
                     onClick={() => handleDelete(prof.id)}
-                    className="flex-1 bg-red-50 text-red-650 border border-red-200 py-2 rounded-xl text-sm font-bold active:scale-95 transition-transform"
+                    className="flex-1 bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400 border border-red-200 dark:border-red-900/30 py-2 rounded-xl text-sm font-bold active:scale-95 transition-transform"
                   >
                     سڕینەوە
                   </button>
