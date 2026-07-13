@@ -445,9 +445,25 @@ export default function AdminPage() {
                       قبوڵکردن
                     </button>
                   )}
+                  {prof.user_id && (
+                    <button 
+                      onClick={async () => {
+                        showConfirm("دڵنیایت لە ڕاگرتنی (بلۆککردن)ی ئەم بەکارهێنەرە؟", async (confirmed) => {
+                          if (confirmed) {
+                            const { toggleBlockUser } = await import("../actions");
+                            await toggleBlockUser(prof.user_id, true);
+                            loadData();
+                          }
+                        });
+                      }}
+                      className="flex-1 bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400 py-2 rounded-xl text-sm font-bold active:scale-95 transition-transform"
+                    >
+                      بلۆککردن
+                    </button>
+                  )}
                   <button 
                     onClick={() => handleDelete(prof.id)}
-                    className="flex-1 bg-red-50 text-red-600 border border-red-200 py-2 rounded-xl text-sm font-bold active:scale-95 transition-transform"
+                    className="flex-1 bg-red-50 text-red-650 border border-red-200 py-2 rounded-xl text-sm font-bold active:scale-95 transition-transform"
                   >
                     سڕینەوە
                   </button>

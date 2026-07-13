@@ -468,6 +468,7 @@ export async function getAdminApprovedProfessionals(searchQuery: string = "") {
       experience_years,
       photo_url,
       created_at,
+      user_id,
       cities ( name_ku ),
       categories ( name_ku, icon )
     `)
@@ -497,6 +498,7 @@ export async function getPendingProfessionalsSearch(searchQuery: string = "") {
       experience_years,
       photo_url,
       created_at,
+      user_id,
       cities ( name_ku ),
       categories ( name_ku, icon )
     `)
@@ -646,6 +648,15 @@ export async function toggleBlockUser(id: string, isBlocked: boolean) {
     .update({ is_blocked: isBlocked })
     .eq("id", id);
   if (error) throw new Error(error.message);
+
+  // If user is blocked, unapprove their professional profile (if exists)
+  if (isBlocked) {
+    await supabase
+      .from("professionals")
+      .update({ is_approved: false })
+      .eq("user_id", id);
+  }
+
   return true;
 }
 
