@@ -27,7 +27,7 @@ export default function TelegramAuthWrapper({ children }: { children: React.Reac
           res = await loginWithTelegram(tg.initDataUnsafe.user.id);
         }
 
-        if (res && res.success !== false) {
+        if (res) {
           if (res.isBlocked) {
              setChecking(false);
              document.body.innerHTML = `
@@ -40,16 +40,18 @@ export default function TelegramAuthWrapper({ children }: { children: React.Reac
              return;
           }
 
-          if (!res.registered) {
-             if (pathname !== '/register') {
-               router.replace("/register");
-               return;
-             }
-          } else {
-             if (pathname === '/register') {
-               router.replace("/");
-               return;
-             }
+          if (res.success !== false) {
+            if (!res.registered) {
+               if (pathname !== '/register') {
+                 router.replace("/register");
+                 return;
+               }
+            } else {
+               if (pathname === '/register') {
+                 router.replace("/");
+                 return;
+               }
+            }
           }
         }
       }

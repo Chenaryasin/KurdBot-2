@@ -200,6 +200,18 @@ export async function getSessionUser() {
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as { id: number; name: string; phone: string; telegram_id: number; role?: string };
+    
+    // Fast DB check to verify user is not blocked
+    const { data: user, error } = await supabase
+      .from("users")
+      .select("is_blocked")
+      .eq("id", decoded.id)
+      .single();
+
+    if (error || !user || user.is_blocked) {
+      return null;
+    }
+
     return decoded;
   } catch (e) {
     return null;
