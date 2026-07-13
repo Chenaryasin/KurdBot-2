@@ -20,9 +20,15 @@ export default function RegisterPage() {
     phone: "",
     experience_years: "",
     city_id: "",
-    category_id: ""
+    category_id: "",
+    degree: "",
+    skills: "",
+    work_locations: ""
   });
   const [file, setFile] = useState<File | null>(null);
+  const [portfolioImages, setPortfolioImages] = useState<string[]>([]);
+  const [uploadingPortfolio, setUploadingPortfolio] = useState(false);
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   
@@ -65,6 +71,69 @@ export default function RegisterPage() {
       setImageSrc(null);
     } catch (e) {
       console.error(e);
+    }
+  };
+
+  const handleCancel = async () => {
+    if (uploadedImages.length > 0) {
+      setLoading(true);
+      try {
+        const { deleteStorageFileByUrl } = await import("../actions");
+        for (const url of uploadedImages) {
+          await deleteStorageFileByUrl(url);
+        }
+      } catch (err) {
+        console.error("Cleanup uploaded files error:", err);
+      }
+    }
+    router.back();
+  };
+
+  const handleUploadPortfolio = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files[0];
+    
+    try {
+      setUploadingPortfolio(true);
+      
+      const options = {
+        maxSizeMB: 0.2,
+        maxWidthOrHeight: 1200,
+        useWebWorker: true,
+      };
+      const compressedFile = await imageCompression(file, options);
+      
+      const fileExt = file.name.split('.').pop() || 'jpg';
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `portfolio/${fileName}`;
+      
+      const { data, error } = await supabase.storage
+        .from("profiles")
+        .upload(filePath, compressedFile);
+        
+      if (error) throw error;
+      
+      const { data: urlData } = supabase.storage
+        .from("profiles")
+        .getPublicUrl(filePath);
+        
+      setPortfolioImages(prev => [...prev, urlData.publicUrl]);
+      setUploadedImages(prev => [...prev, urlData.publicUrl]);
+    } catch (error: any) {
+      showAlert("کێشە لە بارکردنی وێنەی کارەکەتدا هەیە: " + error.message);
+    } finally {
+      setUploadingPortfolio(false);
+    }
+  };
+
+  const handleDeletePortfolioImage = async (url: string) => {
+    setPortfolioImages(prev => prev.filter(imgUrl => imgUrl !== url));
+    try {
+      const { deleteStorageFileByUrl } = await import("../actions");
+      await deleteStorageFileByUrl(url);
+      setUploadedImages(prev => prev.filter(imgUrl => imgUrl !== url));
+    } catch (e) {
+      console.error("Delete uploaded image error:", e);
     }
   };
 
@@ -131,14 +200,19 @@ export default function RegisterPage() {
       category_id: parseInt(formData.category_id),
       photo_url: photo_url,
       telegram_id: tgId,
-      user_id: userId
+      user_id: userId,
+      degree: formData.degree || undefined,
+      skills: formData.skills || undefined,
+      work_locations: formData.work_locations || undefined,
+      portfolio_images: portfolioImages
     });
 
     setLoading(false);
     if (result.success) {
+      setUploadedImages([]); // Clear uploaded tracking state so cancel handler doesn't delete them
       setSuccess(true);
     } else {
-      showAlert("کێشەیەک ڕوویدا لە کاتی ناردنی زانیارییەکان. تکایە دووبارە هەوڵ بدەرەوە.");
+      showAlert(result.error || "کێشەیەک ڕوویدا لە کاتی ناردنی زانیارییەکان. تکایە دووبارە هەوڵ بدەرەوە.");
     }
   };
 
@@ -166,7 +240,7 @@ export default function RegisterPage() {
     <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900 p-4 pb-28">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6 mt-2">
-        <button type="button" onClick={() => router.back()} className="w-10 h-10 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center shadow-sm text-xl border border-gray-100 dark:border-gray-700 active:scale-95 transition-transform">
+        <button type="button" onClick={handleCancel} className="w-10 h-10 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center shadow-sm text-xl border border-gray-100 dark:border-gray-700 active:scale-95 transition-transform">
           🔙
         </button>
         <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">خۆتۆمارکردن</h1>
@@ -244,6 +318,48 @@ export default function RegisterPage() {
         </div>
 
         <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-2">
+            <span>🎓 بڕوانامە</span>
+            <span className="text-xs font-normal text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">ئارەزوومەندانە</span>
+          </label>
+          <input 
+            type="text"
+            className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 outline-none focus:border-blue-500 transition-colors text-gray-900 dark:text-gray-100 placeholder-gray-400"
+            placeholder="نموونە: بەکالۆریۆس لە تەلارسازی"
+            value={formData.degree}
+            onChange={(e) => setFormData({...formData, degree: e.target.value})}
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-2">
+            <span>🛠️ شارەزاییەکانت</span>
+            <span className="text-xs font-normal text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">ئارەزوومەندانە</span>
+          </label>
+          <textarea 
+            className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 outline-none focus:border-blue-500 transition-colors text-gray-900 dark:text-gray-100 placeholder-gray-400 resize-none"
+            placeholder="نموونە: بۆیاخکردن، دیکۆراتی ناوەوە..."
+            rows={3}
+            value={formData.skills}
+            onChange={(e) => setFormData({...formData, skills: e.target.value})}
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-2">
+            <span>📍 شوێنی کارکردنت</span>
+            <span className="text-xs font-normal text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">ئارەزوومەندانە</span>
+          </label>
+          <input 
+            type="text"
+            className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 outline-none focus:border-blue-500 transition-colors text-gray-900 dark:text-gray-100 placeholder-gray-400"
+            placeholder="نموونە: سلێمانی، هەولێر"
+            value={formData.work_locations}
+            onChange={(e) => setFormData({...formData, work_locations: e.target.value})}
+          />
+        </div>
+
+        <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">وێنەی پڕۆفایل (ئارەزوومەندانە)</label>
           <div className="flex flex-col gap-3">
             {previewSrc && (
@@ -262,10 +378,45 @@ export default function RegisterPage() {
           </div>
         </div>
 
+        {/* Portfolio Images Upload Section */}
+        <div className="mt-2 flex flex-col gap-3 border-t border-gray-100 dark:border-gray-700 pt-4">
+          <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-2">
+            <span>📸 وێنەی کارەکانت (پۆرتفۆلیۆ - ئارەزوومەندانە)</span>
+          </label>
+          <p className="text-xs text-gray-400 dark:text-gray-500">وێنەی کارەکانت باربکە بۆ ئەوەی خەڵک و ئەدمین کارەکانت ببینن.</p>
+
+          <div className="grid grid-cols-3 gap-2 mt-2">
+            {portfolioImages.map((url, idx) => (
+              <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 group">
+                <img src={url} alt="Work" className="w-full h-full object-cover" />
+                <button 
+                  type="button"
+                  onClick={() => handleDeletePortfolioImage(url)}
+                  className="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-80 hover:opacity-100 transition-opacity text-xs"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+            
+            <label className="aspect-square rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+              {uploadingPortfolio ? (
+                <span className="text-[10px] font-bold text-center">باردەکات...</span>
+              ) : (
+                <>
+                  <span className="text-2xl mb-1">+</span>
+                  <span className="text-[10px] font-bold text-center px-1">وێنە زیادبکە</span>
+                </>
+              )}
+              <input type="file" accept="image/*" className="hidden" onChange={handleUploadPortfolio} disabled={uploadingPortfolio} />
+            </label>
+          </div>
+        </div>
+
         <button 
           type="submit" 
           disabled={loading}
-          className="mt-4 w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-md active:scale-95 transition-transform disabled:opacity-70"
+          className="mt-6 w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-md active:scale-95 transition-transform disabled:opacity-70"
         >
           {loading ? "چاوەڕێ بکە..." : "خۆتۆمارکردن"}
         </button>

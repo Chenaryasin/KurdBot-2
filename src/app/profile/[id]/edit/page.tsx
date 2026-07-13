@@ -30,6 +30,7 @@ export default function EditProfilePage() {
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [authorized, setAuthorized] = useState(false);
+  const [isApproved, setIsApproved] = useState(true);
   
   const [pendingAddImages, setPendingAddImages] = useState<string[]>([]);
   const [pendingDeleteImages, setPendingDeleteImages] = useState<number[]>([]);
@@ -170,15 +171,19 @@ export default function EditProfilePage() {
             });
             setPhotoUrl(fullProfile.photo_url || "");
             
+            let isUserAdmin = false;
             if (user?.id) {
               const tgId = user.id.toString();
-              // Admin logic
               if (tgId === "1932967171") {
                 isAuthorized = true;
+                isUserAdmin = true;
               } else if (fullProfile.telegram_id && fullProfile.telegram_id.toString() === tgId) {
-                // Owner logic
                 isAuthorized = true;
               }
+            }
+
+            if (fullProfile.is_approved === false && !isUserAdmin) {
+              setIsApproved(false);
             }
           }
         }
@@ -328,6 +333,17 @@ export default function EditProfilePage() {
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center text-gray-500 bg-gray-50 dark:bg-gray-900">خەریکی هێنانە...</div>;
+  }
+
+  if (!isApproved) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 gap-4">
+        <div className="text-6xl">🔒</div>
+        <h2 className="text-xl font-bold">پڕۆفایلەکەت لەژێر پێداچوونەوەدایە!</h2>
+        <p className="text-gray-500 dark:text-gray-400 max-w-xs">تۆ ناتوانیت دەستکاری پڕۆفایلەکەت بکەیت تا ئەو کاتەی لەلایەن ئەدمینەوە پەسەند دەکرێت.</p>
+        <button onClick={() => router.back()} className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold shadow-md active:scale-95 transition-transform">گەڕانەوە</button>
+      </div>
+    );
   }
 
   if (!authorized || !profile) {

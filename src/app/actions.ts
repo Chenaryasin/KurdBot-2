@@ -179,6 +179,10 @@ export async function registerProfessional(formData: {
   photo_url?: string | null;
   telegram_id?: number | null;
   user_id?: number | null;
+  degree?: string;
+  skills?: string;
+  work_locations?: string;
+  portfolio_images?: string[];
 }) {
   const session = await getSessionUser();
   if (!session) return { success: false, error: "Unauthorized" };
@@ -189,21 +193,47 @@ export async function registerProfessional(formData: {
     return { success: false, error: `تکایە ${limitCheck.timeLeft || 60} چرکەی تر چاوەڕێ بکە پێش هەوڵدان بۆ ناردنی داواکاری نوێ.` };
   }
 
-  const { error } = await supabase.from("professionals").insert([
-    {
-      ...formData,
-      name: sanitizeInput(formData.name),
-      telegram_id: session.telegram_id,
-      user_id: session.id,
-      phone: session.phone, // Force the user's verified telegram phone number
-      is_approved: false, // Admin must approve first
-    },
-  ]);
+  const { portfolio_images, ...profData } = formData;
+
+  const { data: newProf, error } = await supabase
+    .from("professionals")
+    .insert([
+      {
+        ...profData,
+        name: sanitizeInput(profData.name),
+        degree: profData.degree ? sanitizeInput(profData.degree) : null,
+        skills: profData.skills ? sanitizeInput(profData.skills) : null,
+        work_locations: profData.work_locations ? sanitizeInput(profData.work_locations) : null,
+        telegram_id: session.telegram_id,
+        user_id: session.id,
+        phone: session.phone,
+        is_approved: false,
+      },
+    ])
+    .select("id")
+    .single();
 
   if (error) {
     console.error("Error registering:", error);
     return { success: false, error: error.message };
   }
+
+  // Insert portfolio images if provided
+  if (portfolio_images && portfolio_images.length > 0 && newProf) {
+    const imagesToInsert = portfolio_images.map((url) => ({
+      professional_id: newProf.id,
+      image_url: url,
+    }));
+
+    const { error: portfolioError } = await supabase
+      .from("portfolio_images")
+      .insert(imagesToInsert);
+
+    if (portfolioError) {
+      console.error("Error adding portfolio images during registration:", portfolioError);
+    }
+  }
+
   return { success: true };
 }
 

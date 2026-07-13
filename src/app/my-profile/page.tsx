@@ -4,14 +4,14 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
-import { User, Phone, LogOut, Briefcase, Heart } from "lucide-react";
+import { User, Phone, LogOut, Briefcase, Heart, Clock } from "lucide-react";
 import { logout } from "../auth-actions";
-import { showConfirm } from "@/lib/alerts";
+import { showConfirm, showAlert } from "@/lib/alerts";
 
 export default function MyProfilePage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
-  const [professionalId, setProfessionalId] = useState<string | null>(null);
+  const [professional, setProfessional] = useState<{ id: string; is_approved: boolean } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -31,12 +31,12 @@ export default function MyProfilePage() {
           
           const { data } = await supabase
             .from("professionals")
-            .select("id")
+            .select("id, is_approved")
             .eq("user_id", sessionUser.id)
             .single();
             
           if (data) {
-            setProfessionalId(data.id.toString());
+            setProfessional(data);
           }
         } else {
           router.replace("/");
@@ -110,19 +110,34 @@ export default function MyProfilePage() {
           </div>
         </Link>
         
-        {professionalId ? (
-          <Link 
-            href={`/profile/${professionalId}`}
-            className="w-full bg-white dark:bg-gray-800 border-2 border-blue-100 dark:border-blue-900/30 text-gray-800 dark:text-gray-200 font-medium py-4 px-6 rounded-2xl flex items-center justify-between shadow-sm active:scale-95 transition-transform"
-          >
-            <div className="flex flex-col text-right">
-              <span className="text-lg font-bold text-blue-600 dark:text-blue-400">پڕۆفایلی وەستایەتی</span>
-              <span className="text-xs text-gray-500 mt-1">بینین و دەستکاریکردنی زانیارییەکانت وەک پسپۆڕ</span>
+        {professional ? (
+          professional.is_approved ? (
+            <Link 
+              href={`/profile/${professional.id}`}
+              className="w-full bg-white dark:bg-gray-800 border-2 border-blue-100 dark:border-blue-900/30 text-gray-800 dark:text-gray-200 font-medium py-4 px-6 rounded-2xl flex items-center justify-between shadow-sm active:scale-95 transition-transform"
+            >
+              <div className="flex flex-col text-right">
+                <span className="text-lg font-bold text-blue-600 dark:text-blue-400">پڕۆفایلی وەستایەتی</span>
+                <span className="text-xs text-gray-500 mt-1">بینین و دەستکاریکردنی زانیارییەکانت وەک پسپۆڕ</span>
+              </div>
+              <div className="bg-blue-50 dark:bg-blue-900/30 p-3 rounded-xl text-blue-500">
+                <Briefcase size={24} />
+              </div>
+            </Link>
+          ) : (
+            <div 
+              onClick={() => showAlert("داواکارییەکەت لەژێر پێداچوونەوەدایە لەلایەن ئەدمینەوە. پاش پەسەندکردنی، پڕۆفایلەکەت لێرەدا چالاک دەبێت.")}
+              className="w-full bg-white dark:bg-gray-800 border-2 border-orange-100 dark:border-orange-900/30 text-gray-800 dark:text-gray-200 font-medium py-4 px-6 rounded-2xl flex items-center justify-between shadow-sm active:scale-95 transition-all cursor-pointer"
+            >
+              <div className="flex flex-col text-right">
+                <span className="text-base font-bold text-orange-600 dark:text-orange-400 leading-tight">فۆڕمی خۆتۆمارکردنەکەت بەسەرکەوتووی نێردراوە تکایە چاوەڕوانبە..</span>
+                <span className="text-xs text-gray-500 mt-1">پڕۆفایلەکەت لەژێر پێداچوونەوەدایە لەلایەن بەڕێوبەرەوە</span>
+              </div>
+              <div className="bg-orange-50 dark:bg-orange-900/30 p-3 rounded-xl text-orange-500">
+                <Clock size={24} />
+              </div>
             </div>
-            <div className="bg-blue-50 dark:bg-blue-900/30 p-3 rounded-xl text-blue-500">
-              <Briefcase size={24} />
-            </div>
-          </Link>
+          )
         ) : (
           <Link 
             href="/become-professional"

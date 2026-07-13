@@ -13,6 +13,7 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const [isApproved, setIsApproved] = useState(true);
   const [reviewText, setReviewText] = useState("");
   const [reviewRating, setReviewRating] = useState(5);
   const [submittingReview, setSubmittingReview] = useState(false);
@@ -22,17 +23,26 @@ export default function ProfilePage() {
     async function loadProfile() {
       if (id) {
         const data = await getProfessionalById(id as string);
-        setProfile(data);
         
-        if (data && typeof window !== "undefined" && (window as any).Telegram?.WebApp) {
-          const tg = (window as any).Telegram.WebApp;
-          tg.ready();
-          const user = tg.initDataUnsafe?.user;
-          if (user?.id) {
-            const tgId = user.id.toString();
-            if (tgId === "1932967171" || (data.telegram_id && data.telegram_id.toString() === tgId)) {
-              setIsAuthorized(true);
+        if (data) {
+          let authorized = false;
+          if (typeof window !== "undefined" && (window as any).Telegram?.WebApp) {
+            const tg = (window as any).Telegram.WebApp;
+            tg.ready();
+            const user = tg.initDataUnsafe?.user;
+            if (user?.id) {
+              const tgId = user.id.toString();
+              if (tgId === "1932967171" || (data.telegram_id && data.telegram_id.toString() === tgId)) {
+                setIsAuthorized(true);
+                authorized = true;
+              }
             }
+          }
+
+          if (data.is_approved === false && !authorized) {
+            setIsApproved(false);
+          } else {
+            setProfile(data);
           }
         }
       }
@@ -70,6 +80,17 @@ export default function ProfilePage() {
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center text-secondary-foreground">چاوەڕێ بکە...</div>;
+  }
+
+  if (!isApproved) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 gap-4">
+        <div className="text-6xl">🔒</div>
+        <h2 className="text-xl font-bold">ڕێگەپێدراو نیت!</h2>
+        <p className="text-gray-500 dark:text-gray-400 max-w-xs">ئەم پڕۆفایلە هێشتا پەسەند نەکراوە لەلایەن بەڕێوبەرەوە.</p>
+        <button onClick={() => router.back()} className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold shadow-md active:scale-95 transition-transform">گەڕانەوە</button>
+      </div>
+    );
   }
 
   if (!profile) {
