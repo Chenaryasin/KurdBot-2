@@ -84,13 +84,20 @@ export default function EditProfilePage() {
       const { getCroppedImg } = await import('@/lib/cropImage');
       const croppedFile = await getCroppedImg(imageSrc, croppedAreaPixels);
 
+      const options = {
+        maxSizeMB: 0.2,
+        maxWidthOrHeight: 800,
+        useWebWorker: true,
+      };
+      const compressedFile = await imageCompression(croppedFile as File, options);
+
       const fileExt = "jpg";
       const fileName = `user_${profile.user_id}_${Math.random()}.${fileExt}`;
       const filePath = `user_profiles/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from("profiles")
-        .upload(filePath, croppedFile);
+        .upload(filePath, compressedFile);
 
       if (uploadError) throw uploadError;
 

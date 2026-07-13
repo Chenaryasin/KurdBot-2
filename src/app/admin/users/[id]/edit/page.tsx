@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { Camera } from "lucide-react";
 import Cropper from 'react-easy-crop';
+import imageCompression from 'browser-image-compression';
 import { getSessionUser } from "../../../../auth-actions";
 import { getUserById } from "../../../../actions";
 import { showAlert } from "@/lib/alerts";
@@ -90,13 +91,20 @@ export default function AdminEditUserPage() {
       const { getCroppedImg } = await import('@/lib/cropImage');
       const croppedFile = await getCroppedImg(imageSrc, croppedAreaPixels);
 
+      const options = {
+        maxSizeMB: 0.2,
+        maxWidthOrHeight: 800,
+        useWebWorker: true,
+      };
+      const compressedFile = await imageCompression(croppedFile as File, options);
+
       const fileExt = "jpg";
       const fileName = `user_${userId}_${Math.random()}.${fileExt}`;
       const filePath = `user_profiles/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from("profiles")
-        .upload(filePath, croppedFile);
+        .upload(filePath, compressedFile);
 
       if (uploadError) throw uploadError;
 
