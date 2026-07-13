@@ -649,12 +649,17 @@ export async function toggleBlockUser(id: string, isBlocked: boolean) {
     .eq("id", id);
   if (error) throw new Error(error.message);
 
-  // If user is blocked, unapprove their professional profile (if exists)
+  // If user is blocked, delete their professional profile completely (if it exists)
   if (isBlocked) {
-    await supabase
+    const { data: prof } = await supabase
       .from("professionals")
-      .update({ is_approved: false })
-      .eq("user_id", id);
+      .select("id")
+      .eq("user_id", id)
+      .maybeSingle();
+
+    if (prof) {
+      await deleteProfessional(prof.id);
+    }
   }
 
   return true;
