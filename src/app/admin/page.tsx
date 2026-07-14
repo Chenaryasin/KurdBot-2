@@ -10,7 +10,8 @@ import {
   getAdminAnnouncements,
   postAnnouncement,
   getSuspendedProfessionalsSearch,
-  toggleSuspendProfessional
+  toggleSuspendProfessional,
+  toggleBlockProfessional
 } from "../actions";
 import Link from "next/link";
 import { Send, Clock, Play } from "lucide-react";
@@ -495,22 +496,19 @@ export default function AdminPage() {
                       چالاککردنەوە
                     </button>
                   )}
-                  {prof.user_id && (
-                    <button 
-                      onClick={async () => {
-                        showConfirm("دڵنیایت لە ڕاگرتنی (بلۆککردن)ی ئەم بەکارهێنەرە؟", async (confirmed) => {
-                          if (confirmed) {
-                            const { toggleBlockUser } = await import("../actions");
-                            await toggleBlockUser(prof.user_id, true);
-                            loadData();
-                          }
-                        });
-                      }}
-                      className="flex-1 bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400 py-2 rounded-xl text-sm font-bold active:scale-95 transition-transform"
-                    >
-                      بلۆککردن
-                    </button>
-                  )}
+                  <button 
+                    onClick={async () => {
+                      showConfirm("دڵنیایت لە ڕاگرتنی (بلۆککردن)ی ئەم بەکارهێنەرە؟", async (confirmed) => {
+                        if (confirmed) {
+                          await toggleBlockProfessional(prof.id);
+                          loadData();
+                        }
+                      });
+                    }}
+                    className="flex-1 bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400 py-2 rounded-xl text-sm font-bold active:scale-95 transition-transform"
+                  >
+                    بلۆککردن
+                  </button>
                   <button 
                     onClick={() => handleDelete(prof.id)}
                     className="flex-1 bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400 border border-red-200 dark:border-red-900/30 py-2 rounded-xl text-sm font-bold active:scale-95 transition-transform"

@@ -710,6 +710,65 @@ export async function toggleBlockUser(id: string, isBlocked: boolean) {
   return true;
 }
 
+export async function toggleBlockProfessional(profId: string) {
+  const session = await getSessionUser();
+  if (!session || !(await isAdmin(session.id))) throw new Error("Unauthorized");
+
+  // 1. Fetch professional details
+  const { data: prof, error: profError } = await supabase
+    .from("professionals")
+    .select("user_id, phone, telegram_id, name")
+    .eq("id", profId)
+    .single();
+
+  if (profError || !prof) throw new Error("Professional not found");
+
+  let targetUserId = prof.user_id;
+
+  // 2. If user_id is null, try to find user by normalized phone
+  if (!targetUserId) {
+    const normalizedPhone = normalizeText(prof.phone);
+    const { data: existingUser } = await supabase
+      .from("users")
+      .select("id")
+      .eq("phone", normalizedPhone)
+      .maybeSingle();
+
+    if (existingUser) {
+      targetUserId = existingUser.id;
+    } else {
+      // 3. If no user exists, create a pre-emptively blocked user
+      const { data: newUser, error: createError } = await supabase
+        .from("users")
+        .insert([{
+          name: prof.name,
+          phone: normalizedPhone,
+          telegram_id: prof.telegram_id,
+          is_blocked: true,
+          password_hash: "telegram_auth"
+        }])
+        .select("id")
+        .single();
+
+      if (createError || !newUser) {
+        console.error("Error creating blocked user fallback:", createError);
+      } else {
+        targetUserId = newUser.id;
+      }
+    }
+  }
+
+  // 4. If we have a target user ID, block them (this also deletes the professional profile)
+  if (targetUserId) {
+    await toggleBlockUser(targetUserId, true);
+  } else {
+    // Fallback: if we couldn't create/find a user, just delete the professional profile anyway
+    await deleteProfessional(profId);
+  }
+
+  return true;
+}
+
 export async function updateUser(id: string, formData: {
   name: string;
   phone: string;
