@@ -216,7 +216,17 @@ export async function registerProfessional(formData: {
 
   if (error) {
     console.error("Error registering:", error);
-    return { success: false, error: error.message };
+    let errMsg = "کێشەیەک ڕوویدا لە کاتی ناردنی زانیارییەکان. تکایە دووبارە هەوڵ بدەرەوە.";
+    if (error.message.includes("professionals_user_id_key")) {
+      errMsg = "تۆ پێشتر وەک پسپۆڕ خۆت تۆمارکردووە!";
+    } else if (error.message.includes("professionals_telegram_id_key")) {
+      errMsg = "ئەم ئەژمارەی تیلیگرامە پێشتر بۆ پسپۆڕێکی تر بەکارهاتووە!";
+    } else if (error.message.includes("professionals_phone_key")) {
+      errMsg = "ئەم ژمارە مۆبایلە پێشتر لەلایەن پسپۆڕێکی ترەوە تۆمارکراوە!";
+    } else {
+      errMsg = error.message;
+    }
+    return { success: false, error: errMsg };
   }
 
   // Insert portfolio images if provided
