@@ -29,7 +29,7 @@ export async function getCategories() {
   return data || [];
 }
 
-export async function getProfessionals(cityId?: string, categoryId?: string, searchQuery: string = "") {
+export async function getProfessionals(cityId?: string, categoryId?: string, searchQuery: string = "", page: number = 1, limit: number = 20) {
   let query = supabase
     .from("professionals")
     .select(`
@@ -55,7 +55,12 @@ export async function getProfessionals(cityId?: string, categoryId?: string, sea
     query = query.or(`name.ilike.%${normalizedSearch}%,phone.ilike.%${normalizedSearch}%`);
   }
 
-  const { data, error } = await query.order("created_at", { ascending: false });
+  const from = (page - 1) * limit;
+  const to = from + limit - 1;
+
+  const { data, error } = await query
+    .order("created_at", { ascending: false })
+    .range(from, to);
   if (error) {
     console.error("Error fetching professionals:", error);
     return [];

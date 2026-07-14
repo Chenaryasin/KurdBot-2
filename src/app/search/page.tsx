@@ -36,6 +36,11 @@ export default function SearchPage() {
   });
   
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  const PAGE_SIZE = 15;
 
   useEffect(() => {
     async function loadFilters() {
@@ -47,14 +52,29 @@ export default function SearchPage() {
     loadFilters();
   }, []);
 
-  useEffect(() => {
-    async function loadPros() {
+  const loadPros = async (isInitial: boolean = false) => {
+    if (isInitial) {
       setLoading(true);
-      const data = await getProfessionals(selectedCity, selectedCategory, searchQuery);
+      const data = await getProfessionals(selectedCity, selectedCategory, searchQuery, 1, PAGE_SIZE);
       setProfessionals(data);
+      setHasMore(data.length === PAGE_SIZE);
+      setPage(1);
       setLoading(false);
+    } else {
+      if (loadingMore || !hasMore) return;
+      setLoadingMore(true);
+      const nextPage = page + 1;
+      const data = await getProfessionals(selectedCity, selectedCategory, searchQuery, nextPage, PAGE_SIZE);
+      if (data.length > 0) {
+        setProfessionals(prev => [...prev, ...data]);
+        setPage(nextPage);
+      }
+      setHasMore(data.length === PAGE_SIZE);
+      setLoadingMore(false);
     }
-    
+  };
+
+  useEffect(() => {
     if (typeof window !== "undefined") {
       sessionStorage.setItem("searchFilters", JSON.stringify({
         city: selectedCity,
@@ -65,11 +85,26 @@ export default function SearchPage() {
     
     // Debounce search slightly
     const delay = setTimeout(() => {
-      loadPros();
+      loadPros(true);
     }, 300);
     
     return () => clearTimeout(delay);
   }, [selectedCity, selectedCategory, searchQuery]);
+
+  useEffect(() => {
+    if (loading || loadingMore || !hasMore) return;
+
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        loadPros(false);
+      }
+    }, { threshold: 0.1 });
+
+    const target = document.getElementById("infinite-scroll-trigger");
+    if (target) observer.observe(target);
+
+    return () => observer.disconnect();
+  }, [loading, loadingMore, hasMore, page, selectedCity, selectedCategory, searchQuery]);
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900 p-4 pb-28">
@@ -151,6 +186,19 @@ export default function SearchPage() {
               }} 
             />
           ))
+        )}
+
+        {loadingMore && (
+          <>
+            <SkeletonCard />
+            <SkeletonCard />
+          </>
+        )}
+
+        {hasMore && !loading && (
+          <div id="infinite-scroll-trigger" className="h-14 flex items-center justify-center text-gray-400 text-sm animate-pulse">
+            بۆ بینینی زیاتر بڕۆ خوارەوە...
+          </div>
         )}
       </div>
     </div>
