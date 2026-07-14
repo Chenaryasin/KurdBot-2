@@ -144,6 +144,18 @@ export default function RegisterPage() {
       if (user) {
         setUserId(user.id);
         setFormData(prev => ({ ...prev, name: user.name, phone: user.phone }));
+
+        // Redirect if already registered/pending/suspended as professional
+        const { data: existingProf } = await supabase
+          .from("professionals")
+          .select("id")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (existingProf) {
+          router.replace("/my-profile");
+          return;
+        }
       }
       
       if (typeof window !== "undefined" && (window as any).Telegram?.WebApp) {
