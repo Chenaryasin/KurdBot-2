@@ -11,7 +11,7 @@ import { showConfirm, showAlert } from "@/lib/alerts";
 export default function MyProfilePage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
-  const [professional, setProfessional] = useState<{ id: string; is_approved: boolean } | null>(null);
+  const [professional, setProfessional] = useState<{ id: string; is_approved: boolean; is_suspended: boolean } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -31,7 +31,7 @@ export default function MyProfilePage() {
           
           const { data } = await supabase
             .from("professionals")
-            .select("id, is_approved")
+            .select("id, is_approved, is_suspended")
             .eq("user_id", sessionUser.id)
             .single();
             
@@ -111,7 +111,20 @@ export default function MyProfilePage() {
         </Link>
         
         {professional ? (
-          professional.is_approved ? (
+          professional.is_suspended ? (
+            <div 
+              onClick={() => showAlert("پڕۆفایلی پسپۆڕیەکەت بە شێوەیەکی کاتی ڕاگیراوە بەهۆی چالاکنەکردنی بەشداریەکەت. تکایە بۆ چالاککردنەوەی پەیوەندی بکە بە ئەدمین.")}
+              className="w-full bg-white dark:bg-gray-800 border-2 border-amber-100 dark:border-amber-900/30 text-gray-800 dark:text-gray-200 font-medium py-4 px-6 rounded-2xl flex items-center justify-between shadow-sm active:scale-95 transition-all cursor-pointer"
+            >
+              <div className="flex flex-col text-right">
+                <span className="text-base font-bold text-amber-600 dark:text-amber-400 leading-tight">پڕۆفایلەکەت بە شێوەیەکی کاتی ڕاگیراوە..</span>
+                <span className="text-xs text-gray-500 mt-1">تکایە بۆ چالاککردنەوەی پەیوەندی بکە بە ئەدمین</span>
+              </div>
+              <div className="bg-amber-50 dark:bg-amber-900/30 p-3 rounded-xl text-amber-500">
+                <Clock size={24} />
+              </div>
+            </div>
+          ) : professional.is_approved ? (
             <Link 
               href={`/profile/${professional.id}`}
               className="w-full bg-white dark:bg-gray-800 border-2 border-blue-100 dark:border-blue-900/30 text-gray-800 dark:text-gray-200 font-medium py-4 px-6 rounded-2xl flex items-center justify-between shadow-sm active:scale-95 transition-transform"

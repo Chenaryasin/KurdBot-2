@@ -14,6 +14,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isApproved, setIsApproved] = useState(true);
+  const [isSuspended, setIsSuspended] = useState(false);
   const [reviewText, setReviewText] = useState("");
   const [reviewRating, setReviewRating] = useState(5);
   const [submittingReview, setSubmittingReview] = useState(false);
@@ -41,6 +42,8 @@ export default function ProfilePage() {
 
           if (data.is_approved === false && !authorized) {
             setIsApproved(false);
+          } else if (data.is_suspended === true && !authorized) {
+            setIsSuspended(true);
           } else {
             setProfile(data);
           }
@@ -88,6 +91,17 @@ export default function ProfilePage() {
         <div className="text-6xl">🔒</div>
         <h2 className="text-xl font-bold">ڕێگەپێدراو نیت!</h2>
         <p className="text-gray-500 dark:text-gray-400 max-w-xs">ئەم پڕۆفایلە هێشتا پەسەند نەکراوە لەلایەن بەڕێوبەرەوە.</p>
+        <button onClick={() => router.back()} className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold shadow-md active:scale-95 transition-transform">گەڕانەوە</button>
+      </div>
+    );
+  }
+
+  if (isSuspended) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 gap-4">
+        <div className="text-6xl">🔒</div>
+        <h2 className="text-xl font-bold">ڕاگیراوە!</h2>
+        <p className="text-gray-500 dark:text-gray-400 max-w-xs">ئەم پڕۆفایلە بە شێوەیەکی کاتی ڕاگیراوە.</p>
         <button onClick={() => router.back()} className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold shadow-md active:scale-95 transition-transform">گەڕانەوە</button>
       </div>
     );

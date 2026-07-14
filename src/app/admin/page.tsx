@@ -8,18 +8,21 @@ import {
   deleteProfessional,
   getMessages,
   getAdminAnnouncements,
-  postAnnouncement
+  postAnnouncement,
+  getSuspendedProfessionalsSearch,
+  toggleSuspendProfessional
 } from "../actions";
 import Link from "next/link";
-import { Send, Clock } from "lucide-react";
+import { Send, Clock, Play } from "lucide-react";
 import { showAlert, showConfirm } from "@/lib/alerts";
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<"approved" | "pending" | "messages" | "announcements" | "users" | "blocked">("pending");
+  const [activeTab, setActiveTab] = useState<"approved" | "pending" | "messages" | "announcements" | "users" | "blocked" | "suspended">("pending");
   const [searchQuery, setSearchQuery] = useState("");
   
   const [pending, setPending] = useState<any[]>([]);
   const [approved, setApproved] = useState<any[]>([]);
+  const [suspended, setSuspended] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const [usersList, setUsersList] = useState<any[]>([]);
@@ -34,13 +37,13 @@ export default function AdminPage() {
   useEffect(() => {
     if (typeof window !== "undefined") {
       const savedTab = sessionStorage.getItem("adminActiveTab") as any;
-      if (["approved", "pending", "messages", "announcements", "users", "blocked"].includes(savedTab)) {
+      if (["approved", "pending", "messages", "announcements", "users", "blocked", "suspended"].includes(savedTab)) {
         setActiveTab(savedTab);
       }
     }
   }, []);
 
-  const changeTab = (tab: "approved" | "pending" | "messages" | "announcements" | "users" | "blocked") => {
+  const changeTab = (tab: "approved" | "pending" | "messages" | "announcements" | "users" | "blocked" | "suspended") => {
     setActiveTab(tab);
     setSearchQuery("");
     if (typeof window !== "undefined") {
@@ -56,6 +59,9 @@ export default function AdminPage() {
     } else if (activeTab === "approved") {
       const data = await getAdminApprovedProfessionals(searchQuery);
       setApproved(data);
+    } else if (activeTab === "suspended") {
+      const data = await getSuspendedProfessionalsSearch(searchQuery);
+      setSuspended(data);
     } else if (activeTab === "messages") {
       const data = await getMessages();
       setMessages(data);
@@ -111,6 +117,20 @@ export default function AdminPage() {
     });
   };
 
+  const handleSuspend = async (id: string, isSuspended: boolean) => {
+    const actionText = isSuspended ? "ڕاگرتن" : "چالاککردنەوە";
+    showConfirm(`دڵنیایت لە ${actionText}ی کاتیی ئەم پسپۆڕە؟`, async (confirmed) => {
+      if (confirmed) {
+        try {
+          await toggleSuspendProfessional(id, isSuspended);
+          loadData();
+        } catch (error) {
+          showAlert(`کێشەیەک ڕوویدا لە ${actionText}ەکە.`);
+        }
+      }
+    });
+  };
+
   const handleDelete = async (id: string) => {
     showConfirm("دڵنیایت لە سڕینەوەی ئەم کەسە بە یەکجاری؟ ئەم کارە هەڵناوەشێتەوە!", async (confirmed) => {
       if (confirmed) {
@@ -149,47 +169,53 @@ export default function AdminPage() {
       </div>
 
       {/* Tabs */}
-      <div className="grid grid-cols-3 gap-2 bg-white dark:bg-gray-800 rounded-xl p-2 mb-4 shadow-sm border border-gray-100 dark:border-gray-700">
+      <div className="grid grid-cols-4 gap-2 bg-white dark:bg-gray-800 rounded-xl p-2 mb-4 shadow-sm border border-gray-100 dark:border-gray-700">
         <button 
           onClick={() => changeTab("approved")}
-          className={`py-2 text-xs md:text-sm font-bold rounded-lg transition-colors ${activeTab === "approved" ? "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300" : "text-gray-500 dark:text-gray-400"}`}
+          className={`py-2 text-xs font-bold rounded-lg transition-colors ${activeTab === "approved" ? "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300" : "text-gray-500 dark:text-gray-400"}`}
         >
           بەشداربوان
         </button>
         <button 
           onClick={() => changeTab("pending")}
-          className={`py-2 text-xs md:text-sm font-bold rounded-lg transition-colors ${activeTab === "pending" ? "bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300" : "text-gray-500 dark:text-gray-400"}`}
+          className={`py-2 text-xs font-bold rounded-lg transition-colors ${activeTab === "pending" ? "bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300" : "text-gray-500 dark:text-gray-400"}`}
         >
           چاوەڕوانی
         </button>
         <button 
+          onClick={() => changeTab("suspended")}
+          className={`py-2 text-xs font-bold rounded-lg transition-colors ${activeTab === "suspended" ? "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300" : "text-gray-500 dark:text-gray-400"}`}
+        >
+          ڕاگیراوەکان
+        </button>
+        <button 
           onClick={() => changeTab("users")}
-          className={`py-2 text-xs md:text-sm font-bold rounded-lg transition-colors ${activeTab === "users" ? "bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300" : "text-gray-500 dark:text-gray-400"}`}
+          className={`py-2 text-xs font-bold rounded-lg transition-colors ${activeTab === "users" ? "bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300" : "text-gray-500 dark:text-gray-400"}`}
         >
           بەکارهێنەران
         </button>
         <button 
           onClick={() => changeTab("messages")}
-          className={`py-2 text-xs md:text-sm font-bold rounded-lg transition-colors ${activeTab === "messages" ? "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300" : "text-gray-500 dark:text-gray-400"}`}
+          className={`py-2 text-xs font-bold rounded-lg transition-colors ${activeTab === "messages" ? "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300" : "text-gray-500 dark:text-gray-400"}`}
         >
           کۆنتێر
         </button>
         <button 
           onClick={() => changeTab("announcements")}
-          className={`py-2 text-xs md:text-sm font-bold rounded-lg transition-colors ${activeTab === "announcements" ? "bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300" : "text-gray-500 dark:text-gray-400"}`}
+          className={`py-2 text-xs font-bold rounded-lg transition-colors ${activeTab === "announcements" ? "bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300" : "text-gray-500 dark:text-gray-400"}`}
         >
           بڵاوکراوە
         </button>
         <button 
           onClick={() => changeTab("blocked")}
-          className={`py-2 text-xs md:text-sm font-bold rounded-lg transition-colors ${activeTab === "blocked" ? "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300" : "text-gray-500 dark:text-gray-400"}`}
+          className={`py-2 text-xs font-bold rounded-lg transition-colors ${activeTab === "blocked" ? "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300" : "text-gray-500 dark:text-gray-400"}`}
         >
           بلۆککراوەکان
         </button>
       </div>
 
       {/* Search Bar */}
-      {(activeTab === "approved" || activeTab === "pending" || activeTab === "users" || activeTab === "blocked") && (
+      {(activeTab === "approved" || activeTab === "pending" || activeTab === "users" || activeTab === "blocked" || activeTab === "suspended") && (
         <div className="mb-4">
           <input 
             type="text"
@@ -398,17 +424,25 @@ export default function AdminPage() {
           </div>
         )
       ) : (
-        // PROFESSIONALS TABS (Approved or Pending)
-        (activeTab === "approved" ? approved : pending).length === 0 ? (
+        // PROFESSIONALS TABS (Approved, Pending, or Suspended)
+        (activeTab === "approved" ? approved : activeTab === "suspended" ? suspended : pending).length === 0 ? (
           <div className="text-center text-gray-400 py-10 bg-white dark:bg-gray-800 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700">
             هیچ کەسێک نەدۆزرایەوە!
           </div>
         ) : (
           <div className="flex flex-col gap-4">
-            {(activeTab === "approved" ? approved : pending).map((prof) => (
-              <div key={prof.id} className={`bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border flex flex-col gap-3 relative overflow-hidden ${activeTab === "pending" ? "border-orange-100 dark:border-orange-900/50" : "border-gray-100 dark:border-gray-700"}`}>
-                <div className={`absolute top-0 right-0 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl ${activeTab === "pending" ? "bg-orange-500" : "bg-blue-500"}`}>
-                  {activeTab === "pending" ? "چاوەڕێی قبوڵکردن" : "پەسەندکراو"}
+            {(activeTab === "approved" ? approved : activeTab === "suspended" ? suspended : pending).map((prof) => (
+              <div key={prof.id} className={`bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border flex flex-col gap-3 relative overflow-hidden ${
+                activeTab === "pending" ? "border-orange-100 dark:border-orange-900/50" : 
+                activeTab === "suspended" ? "border-amber-100 dark:border-amber-900/50" : 
+                "border-gray-100 dark:border-gray-700"
+              }`}>
+                <div className={`absolute top-0 right-0 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl ${
+                  activeTab === "pending" ? "bg-orange-500" : 
+                  activeTab === "suspended" ? "bg-amber-500" : 
+                  "bg-blue-500"
+                }`}>
+                  {activeTab === "pending" ? "چاوەڕێی قبوڵکردن" : activeTab === "suspended" ? "ڕاگیراوە کاتی" : "پەسەندکراو"}
                 </div>
                 
                 <div className="mt-2 flex gap-3 items-start">
@@ -443,6 +477,22 @@ export default function AdminPage() {
                       className="flex-1 bg-green-500 text-white py-2 rounded-xl text-sm font-bold active:scale-95 transition-transform"
                     >
                       قبوڵکردن
+                    </button>
+                  )}
+                  {activeTab === "approved" && (
+                    <button 
+                      onClick={() => handleSuspend(prof.id, true)}
+                      className="flex-1 bg-amber-500 text-white py-2 rounded-xl text-sm font-bold active:scale-95 transition-transform"
+                    >
+                      ڕاگرتنی کاتی
+                    </button>
+                  )}
+                  {activeTab === "suspended" && (
+                    <button 
+                      onClick={() => handleSuspend(prof.id, false)}
+                      className="flex-1 bg-emerald-600 text-white py-2 rounded-xl text-sm font-bold active:scale-95 transition-transform"
+                    >
+                      چالاککردنەوە
                     </button>
                   )}
                   {prof.user_id && (

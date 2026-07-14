@@ -44,7 +44,8 @@ export async function getProfessionals(cityId?: string, categoryId?: string, sea
       favorites ( user_id ),
       reviews ( rating )
     `)
-    .eq("is_approved", true);
+    .eq("is_approved", true)
+    .eq("is_suspended", false);
 
   if (cityId) query = query.eq("city_id", parseInt(cityId));
   if (categoryId) query = query.eq("category_id", parseInt(categoryId));
@@ -87,7 +88,7 @@ export async function getProfessionalById(id: string) {
   const { data, error } = await supabase
     .from("professionals")
     .select(`
-      id, name, phone, experience_years, photo_url, created_at, telegram_id,
+      id, name, phone, experience_years, photo_url, created_at, telegram_id, is_approved, is_suspended,
       degree, skills, work_locations,
       city_id, category_id,
       cities ( name_ku ),
@@ -473,6 +474,7 @@ export async function getAdminApprovedProfessionals(searchQuery: string = "") {
       categories ( name_ku, icon )
     `)
     .eq("is_approved", true)
+    .eq("is_suspended", false)
     .order("created_at", { ascending: false });
 
   if (searchQuery) {
@@ -482,6 +484,49 @@ export async function getAdminApprovedProfessionals(searchQuery: string = "") {
 
   const { data, error } = await query;
   if (error) console.error("Error fetching admin approved:", error);
+  return data || [];
+}
+
+export async function toggleSuspendProfessional(id: string, isSuspended: boolean) {
+  const session = await getSessionUser();
+  if (!session || !(await isAdmin(session.id))) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("professionals")
+    .update({ is_suspended: isSuspended })
+    .eq("id", id);
+
+  if (error) throw new Error(error.message);
+  return true;
+}
+
+export async function getSuspendedProfessionalsSearch(searchQuery: string = "") {
+  const session = await getSessionUser();
+  if (!session || !(await isAdmin(session.id))) throw new Error("Unauthorized");
+
+  let query = supabase
+    .from("professionals")
+    .select(`
+      id,
+      name,
+      phone,
+      experience_years,
+      photo_url,
+      created_at,
+      user_id,
+      cities ( name_ku ),
+      categories ( name_ku, icon )
+    `)
+    .eq("is_suspended", true)
+    .order("created_at", { ascending: false });
+
+  if (searchQuery) {
+    const normalizedSearch = normalizeText(searchQuery);
+    query = query.or(`name.ilike.%${normalizedSearch}%,phone.ilike.%${normalizedSearch}%`);
+  }
+
+  const { data, error } = await query;
+  if (error) console.error("Error fetching suspended search:", error);
   return data || [];
 }
 
