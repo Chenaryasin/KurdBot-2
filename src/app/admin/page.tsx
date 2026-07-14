@@ -16,6 +16,7 @@ import {
 import Link from "next/link";
 import { Send, Clock, Play } from "lucide-react";
 import { showAlert, showConfirm } from "@/lib/alerts";
+import SkeletonCard from "@/components/SkeletonCard";
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<"approved" | "pending" | "messages" | "announcements" | "users" | "blocked" | "suspended">("pending");
@@ -230,7 +231,11 @@ export default function AdminPage() {
 
       {/* Content Area */}
       {loading ? (
-        <div className="text-center text-gray-400 py-10">خەریکی گەڕانە...</div>
+        <div className="flex flex-col gap-4">
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
       ) : activeTab === "announcements" ? (
         <div className="flex flex-col gap-6">
           <form onSubmit={handlePostAnnouncement} className="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">

@@ -36,8 +36,18 @@ export default function AnnouncementsPage() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center p-10">
-          <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
+        <div className="flex flex-col gap-4">
+          {[1, 2, 3].map((n) => (
+            <div key={n} className="bg-white dark:bg-gray-800 rounded-3xl p-5 shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col gap-3">
+              <div className="h-5 shimmer rounded w-1/3 mr-auto"></div>
+              <div className="space-y-2 mt-2">
+                <div className="h-3 shimmer rounded w-full mr-auto"></div>
+                <div className="h-3 shimmer rounded w-5/6 mr-auto"></div>
+                <div className="h-3 shimmer rounded w-2/3 mr-auto"></div>
+              </div>
+              <div className="h-3 shimmer rounded w-1/4 mr-auto mt-2"></div>
+            </div>
+          ))}
         </div>
       ) : announcements.length === 0 ? (
         <div className="text-center py-20 text-gray-500 dark:text-gray-400 flex flex-col items-center">

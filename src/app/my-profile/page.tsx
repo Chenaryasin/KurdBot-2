@@ -61,8 +61,18 @@ export default function MyProfilePage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen bg-gray-50 dark:bg-gray-900">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900 pb-28">
+        <div className="bg-white dark:bg-gray-800 pt-8 pb-6 px-4 shadow-sm rounded-b-3xl relative">
+          <div className="flex flex-col items-center mt-6">
+            <div className="w-24 h-24 shimmer rounded-[2rem] flex-shrink-0"></div>
+            <div className="h-6 shimmer rounded w-1/3 mt-4 mx-auto"></div>
+            <div className="h-4 shimmer rounded w-1/4 mt-2 mx-auto"></div>
+          </div>
+        </div>
+        <div className="p-4 space-y-4">
+          <div className="h-32 shimmer rounded-3xl"></div>
+          <div className="h-20 shimmer rounded-3xl"></div>
+        </div>
       </div>
     );
   }
