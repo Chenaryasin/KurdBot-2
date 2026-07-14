@@ -82,7 +82,45 @@ export default function ProfilePage() {
   };
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center text-secondary-foreground">چاوەڕێ بکە...</div>;
+    return (
+      <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900 pb-20">
+        {/* Cover & Header skeleton */}
+        <div className="bg-gradient-to-br from-blue-100 to-blue-200 dark:from-slate-800 dark:to-slate-900 pt-8 pb-20 px-4 rounded-b-[40px] relative">
+          <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-full absolute top-6 left-4"></div>
+          <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-full absolute top-6 right-4"></div>
+          <div className="text-center mt-4">
+            <div className="h-4 shimmer rounded w-1/4 mx-auto mb-2"></div>
+            <div className="h-8 shimmer rounded w-1/2 mx-auto"></div>
+            <div className="h-4 shimmer rounded w-1/3 mx-auto mt-2"></div>
+          </div>
+        </div>
+
+        {/* Profile Info Card skeleton */}
+        <div className="px-4 -mt-12 relative z-10">
+          <div className="glass-card rounded-3xl p-6 relative border border-gray-100 dark:border-gray-800">
+            <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-24 h-24 bg-card p-1 rounded-full shadow-lg border border-border">
+              <div className="w-full h-full shimmer rounded-full"></div>
+            </div>
+            <div className="mt-14 text-center">
+              <div className="flex justify-center gap-2 mb-6">
+                <div className="h-6 shimmer rounded-full w-20"></div>
+                <div className="h-6 shimmer rounded-full w-32"></div>
+              </div>
+              <div className="flex gap-3">
+                <div className="flex-1 h-12 shimmer rounded-2xl"></div>
+                <div className="flex-1 h-12 shimmer rounded-2xl"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Extended Info skeleton */}
+        <div className="px-4 mt-6 space-y-4">
+          <div className="h-28 shimmer rounded-3xl"></div>
+          <div className="h-28 shimmer rounded-3xl"></div>
+        </div>
+      </div>
+    );
   }
 
   if (!isApproved) {
