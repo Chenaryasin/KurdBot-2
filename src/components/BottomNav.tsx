@@ -37,11 +37,6 @@ export default function BottomNav() {
       icon: User,
     },
     {
-      name: "پەیامەکان",
-      href: "/announcements",
-      icon: MessageSquare,
-    },
-    {
       name: "ڕێکخستن",
       href: "/settings",
       icon: Settings,

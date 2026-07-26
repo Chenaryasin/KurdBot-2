@@ -920,3 +920,119 @@ export async function deleteUser(id: string) {
 
   return true;
 }
+
+// --- BANNER / SLIDER ACTIONS ---
+
+export async function getBanners() {
+  try {
+    const { data, error } = await supabase
+      .from("banners")
+      .select("*")
+      .eq("is_active", true)
+      .order("display_order", { ascending: true })
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching public banners:", error);
+      return [];
+    }
+    return data || [];
+  } catch (e) {
+    console.error("Error in getBanners:", e);
+    return [];
+  }
+}
+
+export async function getAdminBanners() {
+  const session = await getSessionUser();
+  if (!session || !(await isAdmin(session.id))) throw new Error("Unauthorized");
+
+  try {
+    const { data, error } = await supabase
+      .from("banners")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching admin banners:", error);
+      return [];
+    }
+    return data || [];
+  } catch (e) {
+    console.error("Error in getAdminBanners:", e);
+    return [];
+  }
+}
+
+export async function addBanner(formData: { title?: string; image_url: string; link_url?: string }) {
+  const session = await getSessionUser();
+  if (!session || !(await isAdmin(session.id))) return { success: false, error: "Unauthorized" };
+
+  if (!formData.image_url) {
+    return { success: false, error: "تکایە وێنەیەک دیاری بکە" };
+  }
+
+  const { data, error } = await supabase
+    .from("banners")
+    .insert([
+      {
+        title: formData.title ? sanitizeInput(formData.title) : null,
+        image_url: formData.image_url,
+        link_url: formData.link_url ? sanitizeInput(formData.link_url) : null,
+        is_active: true,
+      },
+    ])
+    .select("id")
+    .single();
+
+  if (error) {
+    console.error("Error adding banner:", error);
+    if (error.code === "PGRST205" || error.message?.includes("does not exist")) {
+      return { success: false, error: "تکایە سەرەتا خشتەی banners لە داتابەیس دروست بکە (بڕوانە فایلی banners_setup.sql)" };
+    }
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath("/", "layout");
+  return { success: true, data };
+}
+
+export async function toggleBannerActive(id: number, is_active: boolean) {
+  const session = await getSessionUser();
+  if (!session || !(await isAdmin(session.id))) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("banners")
+    .update({ is_active })
+    .eq("id", id);
+
+  if (error) throw new Error(error.message);
+  revalidatePath("/", "layout");
+  return true;
+}
+
+export async function deleteBanner(id: number) {
+  const session = await getSessionUser();
+  if (!session || !(await isAdmin(session.id))) throw new Error("Unauthorized");
+
+  const { data: banner } = await supabase
+    .from("banners")
+    .select("image_url")
+    .eq("id", id)
+    .single();
+
+  const { error } = await supabase
+    .from("banners")
+    .delete()
+    .eq("id", id);
+
+  if (error) throw new Error(error.message);
+
+  if (banner?.image_url) {
+    await deleteStorageFileByUrl(banner.image_url);
+  }
+
+  revalidatePath("/", "layout");
+  return true;
+}
+

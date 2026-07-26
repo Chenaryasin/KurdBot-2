@@ -11,15 +11,21 @@ import {
   postAnnouncement,
   getSuspendedProfessionalsSearch,
   toggleSuspendProfessional,
-  toggleBlockProfessional
+  toggleBlockProfessional,
+  getAdminBanners,
+  addBanner,
+  toggleBannerActive,
+  deleteBanner
 } from "../actions";
 import Link from "next/link";
-import { Send, Clock, Play } from "lucide-react";
+import { Send, Clock, Play, Image as ImageIcon, Trash2, CheckCircle2, XCircle } from "lucide-react";
 import { showAlert, showConfirm } from "@/lib/alerts";
 import SkeletonCard from "@/components/SkeletonCard";
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<"approved" | "pending" | "messages" | "announcements" | "users" | "blocked" | "suspended">("pending");
+  type TabType = "approved" | "pending" | "messages" | "announcements" | "users" | "blocked" | "suspended" | "banners";
+
+  const [activeTab, setActiveTab] = useState<TabType>("pending");
   const [searchQuery, setSearchQuery] = useState("");
   
   const [pending, setPending] = useState<any[]>([]);
@@ -29,23 +35,31 @@ export default function AdminPage() {
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const [usersList, setUsersList] = useState<any[]>([]);
   const [blockedList, setBlockedList] = useState<any[]>([]);
+  const [bannersList, setBannersList] = useState<any[]>([]);
   
   const [loading, setLoading] = useState(true);
   const [announcementTitle, setAnnouncementTitle] = useState("");
   const [announcementContent, setAnnouncementContent] = useState("");
   const [postingAnnouncement, setPostingAnnouncement] = useState(false);
 
+  // Banner Form States
+  const [bannerTitle, setBannerTitle] = useState("");
+  const [bannerLinkUrl, setBannerLinkUrl] = useState("");
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [bannerFilePreview, setBannerFilePreview] = useState<string | null>(null);
+  const [addingBanner, setAddingBanner] = useState(false);
+
   // Restore tab state on mount
   useEffect(() => {
     if (typeof window !== "undefined") {
       const savedTab = sessionStorage.getItem("adminActiveTab") as any;
-      if (["approved", "pending", "messages", "announcements", "users", "blocked", "suspended"].includes(savedTab)) {
+      if (["approved", "pending", "messages", "announcements", "users", "blocked", "suspended", "banners"].includes(savedTab)) {
         setActiveTab(savedTab);
       }
     }
   }, []);
 
-  const changeTab = (tab: "approved" | "pending" | "messages" | "announcements" | "users" | "blocked" | "suspended") => {
+  const changeTab = (tab: TabType) => {
     setActiveTab(tab);
     setSearchQuery("");
     if (typeof window !== "undefined") {
@@ -78,6 +92,9 @@ export default function AdminPage() {
       const { getBlockedUsers } = await import("../actions");
       const data = await getBlockedUsers(searchQuery);
       setBlockedList(data);
+    } else if (activeTab === "banners") {
+      const data = await getAdminBanners();
+      setBannersList(data);
     }
     setLoading(false);
   }
@@ -99,9 +116,91 @@ export default function AdminPage() {
     }
   };
 
+  const handleBannerFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      setBannerFile(file);
+      setBannerFilePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleAddBanner = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!bannerFile) {
+      showAlert("تکایە وێنەیەک بۆ باڵۆنەکە هەڵبژێرە");
+      return;
+    }
+
+    setAddingBanner(true);
+    try {
+      const imageCompression = (await import("browser-image-compression")).default;
+      const { supabase } = await import("@/lib/supabase");
+
+      const options = { maxSizeMB: 0.5, maxWidthOrHeight: 1200, useWebWorker: true };
+      const compressedFile = await imageCompression(bannerFile, options);
+
+      const fileExt = bannerFile.name.split(".").pop() || "jpg";
+      const fileName = `banners/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from("profiles")
+        .upload(fileName, compressedFile);
+
+      if (uploadError) {
+        throw new Error("هەڵە لە بارکردنی وێنە: " + uploadError.message);
+      }
+
+      const { data: publicUrlData } = supabase.storage
+        .from("profiles")
+        .getPublicUrl(fileName);
+
+      const res = await addBanner({
+        title: bannerTitle,
+        image_url: publicUrlData.publicUrl,
+        link_url: bannerLinkUrl,
+      });
+
+      if (res.success) {
+        setBannerTitle("");
+        setBannerLinkUrl("");
+        setBannerFile(null);
+        setBannerFilePreview(null);
+        loadData();
+        showAlert("باڵۆنەکە بە سەرکەوتوویی زیادکرا!");
+      } else {
+        showAlert("کێشەیەک ڕوویدا: " + res.error);
+      }
+    } catch (err: any) {
+      showAlert(err.message || "کێشەیەک ڕوویدا لە بارکردنی وێنەکە");
+    } finally {
+      setAddingBanner(false);
+    }
+  };
+
+  const handleToggleBanner = async (id: number, currentStatus: boolean) => {
+    try {
+      await toggleBannerActive(id, !currentStatus);
+      loadData();
+    } catch (e: any) {
+      showAlert("کێشەیەک ڕوویدا: " + e.message);
+    }
+  };
+
+  const handleDeleteBannerItem = async (id: number) => {
+    showConfirm("دڵنیایت لە سڕینەوەی ئەم باڵۆنە؟", async (confirmed) => {
+      if (confirmed) {
+        try {
+          await deleteBanner(id);
+          loadData();
+        } catch (e: any) {
+          showAlert("کێشەیەک ڕوویدا لە سڕینەوەی باڵۆنەکە.");
+        }
+      }
+    });
+  };
+
   // Reload when tab or search query changes
   useEffect(() => {
-    // Add a slight debounce for search
     const delay = setTimeout(() => loadData(), 300);
     return () => clearTimeout(delay);
   }, [activeTab, searchQuery]);
@@ -170,7 +269,7 @@ export default function AdminPage() {
         <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">پەڕەی ئەدمین</h1>
       </div>
 
-      {/* Tabs */}
+      {/* Tabs Navigation */}
       <div className="grid grid-cols-4 gap-2 bg-white dark:bg-gray-800 rounded-xl p-2 mb-4 shadow-sm border border-gray-100 dark:border-gray-700">
         <button 
           onClick={() => changeTab("approved")}
@@ -189,6 +288,12 @@ export default function AdminPage() {
           className={`py-2 text-xs font-bold rounded-lg transition-colors ${activeTab === "suspended" ? "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300" : "text-gray-500 dark:text-gray-400"}`}
         >
           ڕاگیراوەکان
+        </button>
+        <button 
+          onClick={() => changeTab("banners")}
+          className={`py-2 text-xs font-bold rounded-lg transition-colors ${activeTab === "banners" ? "bg-cyan-100 dark:bg-cyan-900/40 text-cyan-700 dark:text-cyan-300" : "text-gray-500 dark:text-gray-400"}`}
+        >
+          باڵۆنەکان
         </button>
         <button 
           onClick={() => changeTab("users")}
@@ -216,7 +321,7 @@ export default function AdminPage() {
         </button>
       </div>
 
-      {/* Search Bar */}
+      {/* Search Bar for user lists */}
       {(activeTab === "approved" || activeTab === "pending" || activeTab === "users" || activeTab === "blocked" || activeTab === "suspended") && (
         <div className="mb-4">
           <input 
@@ -236,7 +341,120 @@ export default function AdminPage() {
           <SkeletonCard />
           <SkeletonCard />
         </div>
+      ) : activeTab === "banners" ? (
+        // BANNERS TAB
+        <div className="flex flex-col gap-6">
+          {/* Add New Banner Form */}
+          <form onSubmit={handleAddBanner} className="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+            <h2 className="font-bold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
+              <ImageIcon size={18} className="text-cyan-600 dark:text-cyan-400" />
+              زیادکردنی وێنەی باڵۆن / سڵایدر نوێ
+            </h2>
+
+            {/* Image File Selector */}
+            <div className="mb-4">
+              <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">
+                وێنەی باڵۆن (پێویستە)
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleBannerFileChange}
+                className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-cyan-50 file:text-cyan-700 dark:file:bg-cyan-900/30 dark:file:text-cyan-300 hover:file:bg-cyan-100"
+                required
+              />
+              {bannerFilePreview && (
+                <div className="mt-3 w-full h-36 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 relative">
+                  <img src={bannerFilePreview} alt="Preview" className="w-full h-full object-cover" />
+                </div>
+              )}
+            </div>
+
+            <input
+              type="text"
+              placeholder="سەردێڕ یان ناونیشانی باڵۆن (ئارەزوومەندانە)..."
+              value={bannerTitle}
+              onChange={(e) => setBannerTitle(e.target.value)}
+              className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-gray-100 mb-3 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            />
+
+            <input
+              type="text"
+              placeholder="کۆدی بەستەر یان لینکی خاوەن (ئارەزوومەندانە، نموونە: /search)..."
+              value={bannerLinkUrl}
+              onChange={(e) => setBannerLinkUrl(e.target.value)}
+              className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-gray-100 mb-4 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              dir="ltr"
+            />
+
+            <button
+              type="submit"
+              disabled={addingBanner}
+              className="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 rounded-xl shadow-md active:scale-95 transition-transform disabled:opacity-70 text-sm"
+            >
+              {addingBanner ? "خەریکی بارکردنە..." : "زیادکردنی باڵۆن"}
+            </button>
+          </form>
+
+          {/* Banners List */}
+          <div>
+            <h3 className="font-bold text-gray-700 dark:text-gray-300 mb-3">لیستی باڵۆنە چالاکەکان</h3>
+            {bannersList.length === 0 ? (
+              <div className="text-center text-gray-400 py-8 bg-white dark:bg-gray-800 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700 text-sm">
+                هیچ باڵۆنێک زیاد نەکراوە!
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {bannersList.map((banner) => (
+                  <div key={banner.id} className="bg-white dark:bg-gray-800 rounded-2xl p-3 shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col gap-3">
+                    <div className="w-full h-32 rounded-xl overflow-hidden relative bg-gray-100 dark:bg-gray-900">
+                      <img src={banner.image_url} alt={banner.title || "Banner"} className="w-full h-full object-cover" />
+                      <div className="absolute top-2 right-2">
+                        <span className={`text-[10px] font-bold px-2 py-1 rounded-lg text-white ${banner.is_active ? "bg-green-500" : "bg-gray-500"}`}>
+                          {banner.is_active ? "چالاک" : "ناچالاک"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-1 px-1">
+                      <h4 className="font-bold text-sm text-gray-800 dark:text-gray-100">
+                        {banner.title || "بێ سەردێڕ"}
+                      </h4>
+                      {banner.link_url && (
+                        <p className="text-xs text-gray-400 truncate" dir="ltr">
+                          🔗 {banner.link_url}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex gap-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+                      <button
+                        onClick={() => handleToggleBanner(banner.id, banner.is_active)}
+                        className={`flex-1 py-2 rounded-xl text-xs font-bold transition-transform active:scale-95 flex items-center justify-center gap-1 ${
+                          banner.is_active
+                            ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
+                            : "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+                        }`}
+                      >
+                        {banner.is_active ? "ناچالاککردن" : "چالاککردن"}
+                      </button>
+
+                      <button
+                        onClick={() => handleDeleteBannerItem(banner.id)}
+                        className="py-2 px-4 bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400 border border-red-200 dark:border-red-900/30 rounded-xl text-xs font-bold active:scale-95 transition-transform flex items-center justify-center gap-1"
+                      >
+                        <Trash2 size={14} />
+                        سڕینەوە
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       ) : activeTab === "announcements" ? (
+        // ANNOUNCEMENTS TAB
         <div className="flex flex-col gap-6">
           <form onSubmit={handlePostAnnouncement} className="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
             <h2 className="font-bold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
@@ -248,20 +466,20 @@ export default function AdminPage() {
               placeholder="سەردێڕی پەیام..."
               value={announcementTitle}
               onChange={(e) => setAnnouncementTitle(e.target.value)}
-              className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-gray-100 mb-3 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-gray-100 mb-3 focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
               required
             />
             <textarea
               placeholder="ناوەڕۆکی پەیامەکەت بنووسە..."
               value={announcementContent}
               onChange={(e) => setAnnouncementContent(e.target.value)}
-              className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-gray-100 mb-3 h-32 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-gray-100 mb-3 h-32 focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
               required
             />
             <button
               type="submit"
               disabled={postingAnnouncement}
-              className="w-full bg-purple-600 text-white font-bold py-3 rounded-xl shadow-md active:scale-95 transition-transform disabled:opacity-70"
+              className="w-full bg-purple-600 text-white font-bold py-3 rounded-xl shadow-md active:scale-95 transition-transform disabled:opacity-70 text-sm"
             >
               {postingAnnouncement ? "چاوەڕێ بکە..." : "بڵاوکردنەوە"}
             </button>
@@ -296,35 +514,38 @@ export default function AdminPage() {
       ) : activeTab === "users" ? (
         // USERS TAB
         <div className="flex flex-col gap-3">
-          {loading ? (
-            <p className="text-center text-gray-500 py-10">لە بارکردندایە...</p>
-          ) : usersList.length === 0 ? (
+          {usersList.length === 0 ? (
             <p className="text-center text-gray-500 py-10">هیچ بەکارهێنەرێک نەدۆزرایەوە</p>
           ) : (
             usersList.map((user) => (
               <div key={user.id} className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
-                <Link href={`/admin/users/${user.id}`} className="flex items-center gap-4 mb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 p-2 -mx-2 rounded-xl transition-colors">
-                  <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold overflow-hidden flex-shrink-0">
                     {user.photo_url ? (
                       <img src={user.photo_url} alt={user.name} className="w-full h-full object-cover" />
                     ) : (
-                      <span className="text-xl">👤</span>
+                      user.name.charAt(0)
                     )}
                   </div>
-                  <div className="flex-1">
-                    <h3 className="font-bold text-gray-800 dark:text-gray-100">{user.name}</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400" dir="ltr">{user.phone}</p>
-                    <p className="text-xs text-gray-400 mt-1">{user.cities?.name_ku || "نەزانراو"}</p>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-gray-800 dark:text-gray-100 text-sm truncate">{user.name}</h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5" dir="ltr" style={{ textAlign: "right" }}>
+                      📞 {user.phone}
+                    </p>
+                    {user.cities && (
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                        📍 {user.cities.name_ku}
+                      </p>
+                    )}
                   </div>
-                </Link>
+                  <div className="text-right">
+                    <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${user.role === "admin" ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300" : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300"}`}>
+                      {user.role === "admin" ? "ئەدمین" : "بەکارهێنەر"}
+                    </span>
+                  </div>
+                </div>
                 
-                <div className="flex gap-2">
-                  <Link 
-                    href={`/admin/users/${user.id}/edit`}
-                    className="flex-1 py-2 bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 rounded-lg text-sm font-medium transition-colors text-center"
-                  >
-                    دەستکاری
-                  </Link>
+                <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 flex gap-2">
                   <button 
                     onClick={async () => {
                       showConfirm("دڵنیایت لە ڕاگرتنی (بلۆککردن)ی ئەم بەکارهێنەرە؟", async (confirmed) => {
@@ -335,13 +556,13 @@ export default function AdminPage() {
                         }
                       });
                     }}
-                    className="flex-1 py-2 bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400 rounded-lg text-sm font-medium transition-colors"
+                    className="flex-1 py-2 bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400 rounded-lg text-xs font-bold transition-colors"
                   >
                     بلۆککردن
                   </button>
                   <button 
                     onClick={() => handleDeleteUser(user.id)}
-                    className="flex-1 py-2 bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium transition-colors"
+                    className="flex-1 py-2 bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400 border border-red-200 dark:border-red-900/30 rounded-lg text-xs font-bold transition-colors"
                   >
                     سڕینەوە
                   </button>
@@ -353,35 +574,33 @@ export default function AdminPage() {
       ) : activeTab === "blocked" ? (
         // BLOCKED USERS TAB
         <div className="flex flex-col gap-3">
-          {loading ? (
-            <p className="text-center text-gray-500 py-10">لە بارکردندایە...</p>
-          ) : blockedList.length === 0 ? (
+          {blockedList.length === 0 ? (
             <p className="text-center text-gray-500 py-10">هیچ بەکارهێنەرێکی بلۆککراو نییە</p>
           ) : (
             blockedList.map((user) => (
-              <div key={user.id} className="bg-red-50 dark:bg-red-900/10 rounded-xl p-4 shadow-sm border border-red-100 dark:border-red-900/30">
-                <Link href={`/admin/users/${user.id}`} className="flex items-center gap-4 mb-4 cursor-pointer hover:bg-red-100 dark:hover:bg-red-900/20 p-2 -mx-2 rounded-xl transition-colors">
-                  <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0 border border-red-200 dark:border-red-800">
+              <div key={user.id} className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-red-100 dark:border-red-900/40">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center text-red-600 dark:text-red-400 font-bold overflow-hidden flex-shrink-0">
                     {user.photo_url ? (
-                      <img src={user.photo_url} alt={user.name} className="w-full h-full object-cover opacity-70" />
+                      <img src={user.photo_url} alt={user.name} className="w-full h-full object-cover" />
                     ) : (
-                      <span className="text-xl">⛔</span>
+                      user.name.charAt(0)
                     )}
                   </div>
-                  <div className="flex-1">
-                    <h3 className="font-bold text-red-800 dark:text-red-300">{user.name}</h3>
-                    <p className="text-sm text-red-600 dark:text-red-400" dir="ltr">{user.phone}</p>
-                    <p className="text-xs text-red-500 mt-1">{user.cities?.name_ku || "نەزانراو"}</p>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-gray-800 dark:text-gray-100 text-sm truncate">{user.name}</h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5" dir="ltr" style={{ textAlign: "right" }}>
+                      📞 {user.phone}
+                    </p>
                   </div>
-                </Link>
+                  <div>
+                    <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300">
+                      بلۆککراو
+                    </span>
+                  </div>
+                </div>
                 
-                <div className="flex gap-2">
-                  <Link 
-                    href={`/admin/users/${user.id}/edit`}
-                    className="flex-1 py-2 bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 rounded-lg text-sm font-medium transition-colors text-center"
-                  >
-                    دەستکاری
-                  </Link>
+                <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 flex gap-2">
                   <button 
                     onClick={async () => {
                       showConfirm("دڵنیایت لە لابردنی بلۆکی ئەم بەکارهێنەرە؟", async (confirmed) => {
@@ -392,13 +611,13 @@ export default function AdminPage() {
                         }
                       });
                     }}
-                    className="flex-1 py-2 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded-lg text-sm font-bold transition-colors shadow-sm"
+                    className="flex-1 py-2 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded-lg text-xs font-bold transition-colors shadow-sm"
                   >
                     لابردنی بلۆک
                   </button>
                   <button 
                     onClick={() => handleDeleteUser(user.id)}
-                    className="flex-1 py-2 bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-400 rounded-lg text-sm font-medium transition-colors"
+                    className="flex-1 py-2 bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-400 rounded-lg text-xs font-medium transition-colors"
                   >
                     سڕینەوە
                   </button>
@@ -410,7 +629,7 @@ export default function AdminPage() {
       ) : activeTab === "messages" ? (
         // MESSAGES TAB
         messages.length === 0 ? (
-          <div className="text-center text-gray-400 py-10 bg-white dark:bg-gray-800 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700">
+          <div className="text-center text-gray-400 py-10 bg-white dark:bg-gray-800 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700 text-sm">
             هیچ پەیامێک نییە!
           </div>
         ) : (
@@ -432,7 +651,7 @@ export default function AdminPage() {
       ) : (
         // PROFESSIONALS TABS (Approved, Pending, or Suspended)
         (activeTab === "approved" ? approved : activeTab === "suspended" ? suspended : pending).length === 0 ? (
-          <div className="text-center text-gray-400 py-10 bg-white dark:bg-gray-800 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700">
+          <div className="text-center text-gray-400 py-10 bg-white dark:bg-gray-800 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700 text-sm">
             هیچ کەسێک نەدۆزرایەوە!
           </div>
         ) : (
@@ -448,21 +667,19 @@ export default function AdminPage() {
                   activeTab === "suspended" ? "bg-amber-500" : 
                   "bg-blue-500"
                 }`}>
-                  {activeTab === "pending" ? "چاوەڕێی قبوڵکردن" : activeTab === "suspended" ? "ڕاگیراوە کاتی" : "پەسەندکراو"}
+                  {activeTab === "pending" ? "چاوەڕێی قبوڵکردن" : activeTab === "suspended" ? "ڕاگرتنی کاتی" : "پەسەندکراو"}
                 </div>
                 
                 <div className="mt-2 flex gap-3 items-start">
-                  <Link href={`/profile/${prof.id}`} className="block flex-shrink-0 active:scale-95 transition-transform">
+                  <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-xl flex-shrink-0 overflow-hidden">
                     {prof.photo_url ? (
-                      <img src={prof.photo_url} alt={prof.name} className="w-16 h-16 rounded-xl object-cover border border-gray-100 dark:border-gray-700 shadow-sm" />
+                      <img src={prof.photo_url} alt={prof.name} className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-16 h-16 bg-blue-50 dark:bg-blue-900/30 rounded-xl flex items-center justify-center text-3xl border border-blue-100 dark:border-blue-800">
-                        {prof.categories?.icon || '👤'}
-                      </div>
+                      <div className="w-full h-full flex items-center justify-center text-2xl">👤</div>
                     )}
-                  </Link>
-                  <div className="w-full">
-                    <div className="flex justify-between items-center w-full">
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex justify-between items-start">
                       <h3 className="font-bold text-gray-800 dark:text-gray-100 text-lg">{prof.name}</h3>
                     </div>
                     <div className="text-sm text-gray-600 dark:text-gray-400 mt-2 space-y-1">
