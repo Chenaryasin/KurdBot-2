@@ -13,6 +13,9 @@ export default function SearchPage() {
   
   const [selectedCity, setSelectedCity] = useState<string>(() => {
     if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      const city = urlParams.get("city");
+      if (city !== null) return city;
       const saved = sessionStorage.getItem("searchFilters");
       if (saved) return JSON.parse(saved).city || "";
     }
@@ -21,6 +24,9 @@ export default function SearchPage() {
   
   const [selectedCategory, setSelectedCategory] = useState<string>(() => {
     if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      const cat = urlParams.get("category");
+      if (cat !== null) return cat;
       const saved = sessionStorage.getItem("searchFilters");
       if (saved) return JSON.parse(saved).category || "";
     }
@@ -29,6 +35,9 @@ export default function SearchPage() {
   
   const [searchQuery, setSearchQuery] = useState<string>(() => {
     if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      const q = urlParams.get("q") || urlParams.get("query");
+      if (q !== null) return q;
       const saved = sessionStorage.getItem("searchFilters");
       if (saved) return JSON.parse(saved).query || "";
     }
