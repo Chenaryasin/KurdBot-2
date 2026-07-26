@@ -101,9 +101,9 @@ export default function BannerSlider() {
               alt={banner.title || "Banner"}
               className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex flex-col justify-end p-4">
+            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent flex flex-col justify-end p-4">
               {banner.title && (
-                <h3 className="text-white font-bold text-base md:text-lg drop-shadow-md">
+                <h3 className="text-white font-bold text-base md:text-lg drop-shadow-md leading-snug">
                   {banner.title}
                 </h3>
               )}
@@ -111,26 +111,6 @@ export default function BannerSlider() {
           </div>
         ))}
       </div>
-
-      {banners.length > 1 && (
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-10 bg-black/30 backdrop-blur-md px-2.5 py-1 rounded-full">
-          {banners.map((_, idx) => (
-            <button
-              key={idx}
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setCurrentIndex(idx);
-              }}
-              className={`h-2 rounded-full transition-all duration-300 ${
-                idx === currentIndex ? "w-5 bg-white" : "w-2 bg-white/50"
-              }`}
-              aria-label={`Slide ${idx + 1}`}
-            />
-          ))}
-        </div>
-      )}
     </div>
   );
 
