@@ -83,6 +83,9 @@ export default function HomePage() {
         </Link>
       </div>
 
+      {/* Banner Image Slider Section */}
+      <BannerSlider />
+
       {/* Search Header & Box Section */}
       <div className="w-full space-y-2">
         <h2 className="text-base md:text-lg font-extrabold text-gray-900 dark:text-gray-100 text-right">
@@ -106,9 +109,6 @@ export default function HomePage() {
           </button>
         </form>
       </div>
-
-      {/* Banner Image Slider Section */}
-      <BannerSlider />
 
       {/* Action Buttons Section */}
       <div className="w-full space-y-3 pt-2">
